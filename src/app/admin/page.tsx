@@ -4,44 +4,36 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
-import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "@/components/ecommerce/StatisticsChart";
 import RecentOrders from "@/components/ecommerce/RecentOrders";
-import DemographicCard from "@/components/ecommerce/DemographicCard";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
   const [allowed, setAllowed] = useState(false);
-  const [notAllowed, setNotAllowed] = useState(false);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "null");
 
-    // Not logged in → redirect
     if (!user) {
       router.replace("/signin");
       return;
     }
 
-    // Logged in but NOT admin → show message
     if (user.role !== "admin") {
-      setNotAllowed(true);
+      setAllowed(false);
       setAuthChecked(true);
       return;
     }
 
-    // Admin → allow
     setAllowed(true);
     setAuthChecked(true);
-  }, []); // runs once
+  }, []);
 
-  // Prevent flash before auth decision
   if (!authChecked) return null;
 
-  // ❌ Not admin view
-  if (notAllowed) {
+  // ❌ If user is logged in but not admin
+  if (!allowed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
         <div className="text-center p-6 bg-white dark:bg-gray-800 border rounded-lg shadow-lg max-w-sm">
@@ -61,27 +53,21 @@ export default function AdminDashboard() {
     );
   }
 
-  // ✅ Admin dashboard
+  // ✅ Admin Dashboard
   return (
-    <div className="grid grid-cols-12 gap-4 md:gap-6">
-      <div className="col-span-12 space-y-6 xl:col-span-7">
+    <div className="space-y-6">
+      {/* ROW 1 — Metrics */}
+      <div className="col-span-12">
         <EcommerceMetrics />
+      </div>
+
+      {/* ROW 2 — Chart */}
+      <div className="col-span-12">
         <MonthlySalesChart />
       </div>
 
-      <div className="col-span-12 xl:col-span-5">
-        <MonthlyTarget />
-      </div>
-
+      {/* ROW 3 — Recent Orders */}
       <div className="col-span-12">
-        <StatisticsChart />
-      </div>
-
-      <div className="col-span-12 xl:col-span-5">
-        <DemographicCard />
-      </div>
-
-      <div className="col-span-12 xl:col-span-7">
         <RecentOrders />
       </div>
     </div>
