@@ -4,173 +4,252 @@ import Image from "next/image";
 import { X, Download, Eye as ViewIcon } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
-export default function LeadDetailsModal({ open, onClose, data }) {
+export default function LeadDetailsModal({ open, onClose, data, mode }) {
   const modalRef = useRef(null);
   const [previewSrc, setPreviewSrc] = useState(null);
+  const [form, setForm] = useState({});
+  const [editMode, setEditMode] = useState(false);
 
-  // ---- Close on background click ----
+  // Sync form on open
+  useEffect(() => {
+    if (open) {
+      setForm(data);
+      setEditMode(mode === "edit");
+    }
+  }, [open, data, mode]);
+
+  // Close on background click
   useEffect(() => {
     if (!open) return;
 
-    const handleClickOutside = (e) => {
-
-      // ⛔ Prevent closing main modal when preview is open
+    const handler = (e) => {
       if (previewSrc) return;
-
-      if (modalRef.current && !modalRef.current.contains(e.target)) {
-        onClose();
-      }
+      if (modalRef.current && !modalRef.current.contains(e.target)) onClose(false);
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open, onClose, previewSrc]);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open, previewSrc]);
 
-  // ---- Close with ESC ----
+  // ESC close
   useEffect(() => {
     if (!open) return;
 
-    const handleEsc = (e) => {
+    const handler = (e) => {
       if (e.key === "Escape") {
         if (previewSrc) setPreviewSrc(null);
-        else onClose();
+        else onClose(false);
       }
     };
 
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [open, previewSrc, onClose]);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, previewSrc]);
 
   if (!open || !data) return null;
 
-  // organize attachments
-  const files = {
-    companyLogo: null,
-    clientLogo: null,
-    vatCertificate: null,
-    tradeLicense: null,
-  };
-
+  // Build attachment structure
+  const files = { companyLogo: null, clientLogo: null, vatCertificate: null, tradeLicense: null };
   data.attachments?.forEach((file) => {
-    if (files[file.fieldname] === null) files[file.fieldname] = file;
+    if (!files[file.fieldname]) files[file.fieldname] = file;
   });
+
+  // Fix ObjectId formatting from DB output
+  const formatFileId = (id) => String(id).replace(/ObjectId\("(.+)"\)/, "$1");
+
+  // SAVE CHANGES
+ const handleSave = async () => {
+  const fd = new FormData();
+
+  // Send only editable normal fields
+  Object.entries(form).forEach(([key, val]) => {
+    if (
+      typeof val !== "object" && 
+      key !== "attachments" && 
+      key !== "_id" &&
+      key !== "__v"
+    ) {
+      fd.append(key, val);
+    }
+  });
+
+  // Send files only if replaced
+  ["companyLogo", "clientLogo", "vatCertificate", "tradeLicense"].forEach(field => {
+    if (form[field] instanceof File) {
+      fd.append(field, form[field]);
+    }
+  });
+
+  const res = await fetch(`/api/all-leads/${form._id}`, {
+    method: "PUT",
+    body: fd,
+  });
+
+  const result = await res.json();
+  if (result.success) {
+    alert("Updated!");
+    setEditMode(false);
+    onClose(true);
+  } else {
+    alert(result.message || "Update failed");
+  }
+};
+
 
   return (
     <>
-      {/* -------- Main Modal -------- */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
+      {/* MAIN MODAL */}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-[99]">
         <div
           ref={modalRef}
-          className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg w-[90%] max-w-6xl max-h-[90vh] overflow-y-auto p-6 shadow-xl"
+          className="w-[90%] max-w-6xl bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg max-h-[90vh] overflow-y-auto p-6 shadow-lg"
         >
-          {/* Header */}
+          {/* HEADER */}
           <div className="flex justify-between items-center border-b pb-3 dark:border-gray-700">
-            <h2 className="text-lg font-bold dark:text-white">Lead Full Details</h2>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
-              <X size={20} />
-            </button>
+            <h2 className="text-lg font-bold dark:text-white">
+              {editMode ? "Edit Lead" : "Lead Details"}
+            </h2>
+
+            <div className="flex gap-2">
+              {mode === "edit" && (
+                !editMode ? (
+                  <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={() => setEditMode(true)}>
+                    Edit
+                  </button>
+                ) : (
+                  <>
+                    <button className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700" onClick={handleSave}>
+                      Save
+                    </button>
+
+                    <button
+                      className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                      onClick={() => {
+                        setForm(data);
+                        setEditMode(false);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )
+              )}
+
+              <button onClick={() => onClose(false)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                <X size={20} />
+              </button>
+            </div>
           </div>
 
-          {/* Content Grid */}
+          {/* CONTENT */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
-            {Object.entries(data).map(([key, value]) => {
-              if (typeof value === "object" || key === "_id" || key === "__v") return null;
+
+            {/* ---- TEXT FIELDS ---- */}
+            {Object.entries(data).map(([key]) => {
+              if (key === "_id" || key === "__v" || typeof data[key] === "object") return null;
 
               return (
                 <div key={key} className="p-3 border rounded-md dark:border-gray-700">
-                  <p className="text-[11px] uppercase font-semibold text-gray-500 dark:text-gray-400">
+                  <p className="text-[11px] uppercase text-gray-500 dark:text-gray-400 font-semibold">
                     {key.replace(/([A-Z])/g, " $1")}
                   </p>
-                  <p className="text-sm mt-1 dark:text-gray-200">{value || "—"}</p>
+
+                  {editMode ? (
+                    <input
+                      type="text"
+                      className="w-full mt-2 p-2 border rounded dark:border-gray-700 dark:bg-gray-800"
+                      value={form[key] || ""}
+                      onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                    />
+                  ) : (
+                    <p className="mt-1 text-sm dark:text-gray-200">{form[key] || "—"}</p>
+                  )}
                 </div>
               );
             })}
 
-            {/* IMAGES PREVIEW + DOWNLOAD */}
-            {["companyLogo", "clientLogo"].map((fileKey) => (
-              <div key={fileKey} className="p-3 border rounded-md text-center dark:border-gray-700">
-                <p className="text-[11px] uppercase font-semibold text-gray-500 dark:text-gray-400">{fileKey}</p>
+            {/* ---- IMAGE FILES ---- */}
+            {["companyLogo", "clientLogo"].map((fileKey) => {
+              const file = files[fileKey];
+              const id = file ? formatFileId(file.fileId) : null;
 
-                {files[fileKey] ? (
-                  <>
-                    <Image
-                      src={`/api/all-leads/files/${files[fileKey].fileId}`}
-                      alt={files[fileKey].filename}
-                      width={120}
-                      height={120}
-                      className="mt-3 rounded border object-cover mx-auto cursor-pointer hover:opacity-80 transition"
-                      onClick={() =>
-                        setPreviewSrc(`/api/all-leads/files/${files[fileKey].fileId}`)
-                      }
-                    />
+              return (
+                <div key={fileKey} className="p-3 border rounded-md dark:border-gray-700 text-center">
+                  <p className="text-[11px] uppercase text-gray-500 dark:text-gray-400 font-semibold">
+                    {fileKey}
+                  </p>
 
-                    {/* Action Buttons */}
-                    <div className="flex justify-center gap-4 mt-2">
-                   
+                  {id ? (
+                    <>
+                      <Image
+                        src={`/api/all-leads/files/${id}`}
+                        width={120}
+                        height={120}
+                        alt={file.filename}
+                        className="mt-3 rounded border cursor-pointer hover:opacity-80 transition"
+                        onClick={() => setPreviewSrc(`/api/all-leads/files/${id}`)}
+                      />
 
-                      <a
-                        href={`/api/all-leads/files/${files[fileKey].fileId}`}
-                        download
-                        className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
-                        title="Download"
-                      >
-                        <Download size={18} />
+                      <a href={`/api/all-leads/files/${id}`} download className="mt-2 inline-block p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+                        <Download />
                       </a>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-sm mt-3 text-gray-400 dark:text-gray-500">No file</p>
-                )}
-              </div>
-            ))}
 
-            {/* PDF PREVIEW + DOWNLOAD */}
-            {["vatCertificate", "tradeLicense"].map((fileKey) => (
-              <div key={fileKey} className="p-3 border rounded-md dark:border-gray-700">
-                <p className="text-[11px] uppercase font-semibold text-gray-500 dark:text-gray-400">{fileKey}</p>
+                      {editMode && (
+                        <input type="file" className="mt-2" accept="image/*" onChange={(e) => setForm({ ...form, [fileKey]: e.target.files[0] })} />
+                      )}
+                    </>
+                  ) : editMode ? (
+                    <input type="file" className="mt-3" accept="image/*" onChange={(e) => setForm({ ...form, [fileKey]: e.target.files[0] })} />
+                  ) : (
+                    <p className="mt-3 text-gray-400 dark:text-gray-600">No file</p>
+                  )}
+                </div>
+              );
+            })}
 
-                {files[fileKey] ? (
-                  <div className="flex items-center gap-3 mt-3">
-                    
+            {/* ---- PDF FILES ---- */}
+            {["vatCertificate", "tradeLicense"].map((fileKey) => {
+              const file = files[fileKey];
+              const id = file ? formatFileId(file.fileId) : null;
 
-                    <a
-                      href={`/api/all-leads/files/${files[fileKey].fileId}`}
-                      download
-                      className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
-                      title="Download PDF"
-                    >
-                      <Download size={18} />
-                    </a>
+              return (
+                <div key={fileKey} className="p-3 border rounded-md dark:border-gray-700">
+                  <p className="text-[11px] uppercase text-gray-500 dark:text-gray-400 font-semibold">{fileKey}</p>
 
-                    <span className="text-sm dark:text-gray-300">
-                      {files[fileKey].filename}
-                    </span>
-                  </div>
-                ) : (
-                  <p className="text-sm mt-3 text-gray-400 dark:text-gray-500">No file</p>
-                )}
-              </div>
-            ))}
+                  {id ? (
+                    <>
+                      <div className="flex items-center gap-3 mt-3">
+                       
+
+                        <a href={`/api/all-leads/files/${id}`} download className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+                          <Download />
+                        </a>
+
+                        <span className="text-sm dark:text-gray-300">{file.filename}</span>
+                      </div>
+
+                      {editMode && (
+                        <input type="file" accept="application/pdf" className="mt-2" onChange={(e) => setForm({ ...form, [fileKey]: e.target.files[0] })} />
+                      )}
+                    </>
+                  ) : editMode ? (
+                    <input type="file" accept="application/pdf" className="mt-3" onChange={(e) => setForm({ ...form, [fileKey]: e.target.files[0] })} />
+                  ) : (
+                    <p className="mt-3 text-gray-400 dark:text-gray-600">No file</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* -------- IMAGE PREVIEW MODAL -------- */}
+      {/* IMAGE PREVIEW POPUP */}
       {previewSrc && (
-        <div
-          className="fixed inset-0 bg-black/70 flex justify-center items-center z-[100]"
-          onClick={() => setPreviewSrc(null)} // close when clicking outside preview
-        >
-          <div
-            className="relative"
-            onClick={(e) => e.stopPropagation()} // ⛔ prevent parent closing
-          >
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-[100]" onClick={() => setPreviewSrc(null)}>
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
             <Image src={previewSrc} width={500} height={500} alt="Preview" className="rounded shadow-lg" />
-
-            <button
-              onClick={() => setPreviewSrc(null)}
-              className="absolute -top-4 -right-4 bg-white dark:bg-gray-800 p-2 rounded-full shadow"
-            >
+            <button className="absolute -top-4 -right-4 bg-white dark:bg-gray-800 p-2 rounded-full" onClick={() => setPreviewSrc(null)}>
               <X size={20} />
             </button>
           </div>

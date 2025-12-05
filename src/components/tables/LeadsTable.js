@@ -13,8 +13,9 @@ import LeadDetailsModal from "../LeadDetailsModal";
 export default function LeadsTable() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedLead, setSelectedLead] = useState(null);
-const [openModal, setOpenModal] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+const [selectedLead, setSelectedLead] = useState(null);
+const [modalMode, setModalMode] = useState("view");
   // Pagination
   const [page, setPage] = useState(1);
   const limit = 50; // ✅ SHOW 50 ROWS
@@ -45,9 +46,10 @@ const [openModal, setOpenModal] = useState(false);
     setTimeout(() => setLoading(false), 120);
   };
 
-const handleView = (lead) => {
+const openModal = (lead, mode) => {
   setSelectedLead(lead);
-  setOpenModal(true);
+  setModalMode(mode);
+  setModalOpen(true);
 };
   useEffect(() => {
     fetchLeads();
@@ -133,10 +135,10 @@ const handleView = (lead) => {
 
 <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
   <div className="flex items-center justify-center gap-3">
-                          <button  onClick={() => handleView(lead)} className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#27AE60]/10 text-[#27AE60] border-[#27AE60]/40 hover:bg-[#27AE60]/20 transition-all">
+                          <button  onClick={() => openModal(lead, "view")} className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#27AE60]/10 text-[#27AE60] border-[#27AE60]/40 hover:bg-[#27AE60]/20 transition-all">
                             <Eye size={16} />
                           </button>
-                          <button className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#E67E22]/10 text-[#E67E22] border-[#E67E22]/40 hover:bg-[#E67E22]/20 transition-all">
+                          <button onClick={() => openModal(lead, "edit")} className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#E67E22]/10 text-[#E67E22] border-[#E67E22]/40 hover:bg-[#E67E22]/20 transition-all">
                             <Pencil size={16} />
                           </button>
                         </div>
@@ -202,11 +204,16 @@ const handleView = (lead) => {
         </button>
 
       </div>
-      <LeadDetailsModal 
-  open={openModal} 
-  onClose={() => setOpenModal(false)} 
+      <LeadDetailsModal
+  open={modalOpen}
+  onClose={(shouldRefresh) => {
+    setModalOpen(false);
+    if (shouldRefresh) fetchLeads();
+  }}
   data={selectedLead}
+  mode={modalMode}
 />
+
     </div>
   );
 }
