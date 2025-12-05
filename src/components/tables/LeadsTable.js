@@ -10,12 +10,13 @@ import {
 } from "../ui/table";
 import { Eye, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import LeadDetailsModal from "../LeadDetailsModal";
+
 export default function LeadsTable() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-const [selectedLead, setSelectedLead] = useState(null);
-const [modalMode, setModalMode] = useState("view");
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [modalMode, setModalMode] = useState("view");
   // Pagination
   const [page, setPage] = useState(1);
   const limit = 50; // ✅ SHOW 50 ROWS
@@ -45,6 +46,47 @@ const [modalMode, setModalMode] = useState("view");
 
     setTimeout(() => setLoading(false), 120);
   };
+    // 🔥 Update state instantly when toggled
+  const updateRowStatus = (index, newStatus) => {
+    setLeads((prev) => {
+      const updated = [...prev];
+      // make sure we don't mutate directly
+      updated[index] = { ...updated[index], status: newStatus };
+      return updated;
+    });
+  };
+
+  const StatusToggle = ({ lead, index }) => {
+
+  const toggleStatus = async () => {
+    const newStatus = lead.status === "pending" ? "completed" : "pending";
+
+    // 🔥 Call new API
+    await fetch(`/api/update-status/${lead._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    // 🔥 Update UI
+    updateRowStatus(index, newStatus);
+  };
+
+  return (
+    <button
+      onClick={toggleStatus}
+      className={`px-3 py-1 rounded-md text-xs font-semibold transition border shadow-sm
+        ${
+          lead.status === "completed"
+            ? "bg-green-600 text-white hover:bg-green-700 border-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+            : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+        }`}
+    >
+      {lead.status === "completed" ? "Completed" : "Pending"}
+    </button>
+  );
+};
+
 
 const openModal = (lead, mode) => {
   setSelectedLead(lead);
@@ -74,17 +116,17 @@ const openModal = (lead, mode) => {
     <div className="space-y-6">
 
       {/* ---------- SCROLLABLE TABLE CONTAINER ---------- */}
-      <div className="rounded-lg border bg-white shadow-lg dark:bg-gray-900 dark:border-gray-700 overflow-hidden">
+      <div className="rounded-xl border border-gray-300 bg-white shadow-xl dark:bg-gray-900 dark:border-gray-700 overflow-hidden">
 
         {/* Scroll only table, not page */}
-        <div className="max-h-[600px] overflow-y-auto"> {/* ✅ Scroll bar only table */}
-          <Table className="w-full">
+        <div className="max-h-[600px] overflow-y-auto custom-scrollbar"> {/* ✅ Scroll bar only table */}
+          <Table className="w-full border-collapse">
             <TableHeader>
-              <TableRow className="bg-[#465fff]">
-                {["#","Location", "Capacity", "Admin Name", "Email", "Phone", "Actions"].map((heading) => (
+              <TableRow className="bg-[#465fff] dark:bg-[#374bd1] hover:bg-[#465fff] dark:hover:bg-[#374bd1] border-b border-gray-300 dark:border-gray-700">
+                {["#","Location", "Capacity", "Admin Name", "Email", "Phone","Status", "Actions"].map((heading) => (
                   <TableCell
                     key={heading}
-                    className="px-5 py-3 font-bold text-white text-xs uppercase tracking-wide whitespace-nowrap"
+                    className="px-5 py-4 font-bold text-white text-xs uppercase tracking-wider whitespace-nowrap border-r border-blue-400/30 last:border-r-0"
                   >
                     {heading}
                   </TableCell>
@@ -96,79 +138,79 @@ const openModal = (lead, mode) => {
               {(loading ? [...Array(limit)] : leads).map((lead, index) => (
                 <TableRow
                   key={index}
-                  className={`transition-all duration-300 ${
-                    loading ? "opacity-40 translate-y-[2px]" : "opacity-100 translate-y-0"
+                  className={`transition-colors duration-200 border-b border-gray-300 dark:border-gray-700 ${
+                    loading ? "opacity-40" : "opacity-100"
                   } ${
                     index % 2 === 0
                       ? "bg-white dark:bg-gray-900"
-                      : "bg-gray-100 dark:bg-gray-800"
-                  } hover:bg-[#E8F0FE] dark:hover:bg-gray-700`}
+                      : "bg-gray-50 dark:bg-gray-800/50"
+                  } hover:bg-blue-50 dark:hover:bg-blue-900/10`}
                 >
                   {loading ? (
-                    <TableCell colSpan={6} className="animate-pulse px-5 py-3">
-                      <div className="w-full h-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                    <TableCell colSpan={8} className="animate-pulse px-5 py-3">
+                      <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
                     </TableCell>
                   ) : (
                   <>
-                   <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700 text-center ">
-    {(page - 1) * limit + index + 1}
-  </TableCell>
-  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
-    {lead.locationName}
-  </TableCell>
+                   <TableCell className="px-5 py-3 border-r border-gray-300 dark:border-gray-700 text-center font-medium text-gray-600 dark:text-gray-400 text-xs">
+                    {(page - 1) * limit + index + 1}
+                  </TableCell>
+                  <TableCell className="px-5 py-3 border-r border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium">
+                    {lead.locationName}
+                  </TableCell>
 
-  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
-    {lead.capacity}
-  </TableCell>
+                  <TableCell className="px-5 py-3 border-r border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm">
+                    {lead.capacity}
+                  </TableCell>
 
-  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
-    {lead.adminName}
-  </TableCell>
+                  <TableCell className="px-5 py-3 border-r border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium">
+                    {lead.adminName}
+                  </TableCell>
 
-  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
-    {lead.adminEmail}
-  </TableCell>
+                  <TableCell className="px-5 py-3 border-r border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm">
+                    {lead.adminEmail}
+                  </TableCell>
 
-  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
-    {lead.adminPhone}
-  </TableCell>
-<TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
-  <div className="flex items-center justify-center gap-3">
+                  <TableCell className="px-5 py-3 border-r border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm whitespace-nowrap">
+                    {lead.adminPhone}
+                  </TableCell>
+                  
+                  <TableCell className="px-5 py-3 border-r border-gray-300 dark:border-gray-700 text-center">
+                    <StatusToggle lead={lead} index={index} />
+                  </TableCell>
 
-    {/* VIEW BUTTON WITH TOOLTIP */}
-    <div className="relative group">
-      <button
-        onClick={() => openModal(lead, "view")}
-        className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#27AE60]/10 text-[#27AE60] border-[#27AE60]/40 hover:bg-[#27AE60]/20 transition-all"
-      >
-        <Eye size={16} />
-      </button>
+                  <TableCell className="px-5 py-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
 
-      {/* Tooltip */}
-      <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-black text-white opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200">
-        View Details
-      </span>
-    </div>
+                      {/* VIEW BUTTON */}
+                      <div className="relative group">
+                        <button
+                          onClick={() => openModal(lead, "view")}
+                          className="flex items-center justify-center w-8 h-8 rounded-lg border border-[#27AE60]/30 bg-[#27AE60]/10 text-[#27AE60] hover:bg-[#27AE60] hover:text-white transition-all dark:border-[#27AE60]/50 dark:bg-[#27AE60]/20 dark:hover:bg-[#27AE60]"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded bg-gray-900 text-white dark:bg-white dark:text-gray-900 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-md">
+                          View
+                        </span>
+                      </div>
 
-    {/* EDIT BUTTON WITH TOOLTIP */}
-    <div className="relative group">
-      <button
-        onClick={() => openModal(lead, "edit")}
-        className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#E67E22]/10 text-[#E67E22] border-[#E67E22]/40 hover:bg-[#E67E22]/20 transition-all"
-      >
-        <Pencil size={16} />
-      </button>
+                      {/* EDIT BUTTON */}
+                      <div className="relative group">
+                        <button
+                          onClick={() => openModal(lead, "edit")}
+                          className="flex items-center justify-center w-8 h-8 rounded-lg border border-[#E67E22]/30 bg-[#E67E22]/10 text-[#E67E22] hover:bg-[#E67E22] hover:text-white transition-all dark:border-[#E67E22]/50 dark:bg-[#E67E22]/20 dark:hover:bg-[#E67E22]"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded bg-gray-900 text-white dark:bg-white dark:text-gray-900 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-md">
+                          Edit
+                        </span>
+                      </div>
 
-      {/* Tooltip */}
-      <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-black text-white opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200">
-        Edit Lead
-      </span>
-    </div>
-
-  </div>
-</TableCell>
-
-                    </>
+                    </div>
+                  </TableCell>
+                  </>
                   )}
                 </TableRow>
               ))}
@@ -178,36 +220,43 @@ const openModal = (lead, mode) => {
       </div>
 
       {/* ---------- PAGINATION ---------- */}
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center gap-3 py-2">
 
         <button
           onClick={prevPage}
           disabled={page === 1}
-          className={`px-3 py-2 border rounded-md flex items-center gap-1 text-sm ${
-            page === 1 ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-200 dark:hover:bg-gray-800"
-          }`}
+          className={`px-3 py-2 border rounded-lg flex items-center gap-1 text-sm font-medium transition-colors 
+            ${
+              page === 1 
+              ? "opacity-50 cursor-not-allowed border-gray-200 text-gray-400 dark:border-gray-800 dark:text-gray-600" 
+              : "border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            }`}
         >
-          <ChevronLeft size={18} /> Prev
+          <ChevronLeft size={16} /> Prev
         </button>
 
-        {[...Array(totalPages)]
-          .slice(Math.max(0, page - 3), page + 2)
-          .map((_, i) => {
-            const num = i + (page > 3 ? page - 2 : 1);
-            if (num > totalPages) return null;
+        <div className="flex items-center gap-1">
+          {[...Array(totalPages)]
+            .slice(Math.max(0, page - 3), page + 2)
+            .map((_, i) => {
+              const num = i + (page > 3 ? page - 2 : 1);
+              if (num > totalPages) return null;
 
-            return (
-              <button
-                key={num}
-                onClick={() => setPage(num)}
-                className={`w-9 h-9 rounded-md border text-sm transition ${
-                  page === num ? "bg-[#465fff] text-white" : "hover:bg-gray-200 dark:hover:bg-gray-800"
-                }`}
-              >
-                {num}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={num}
+                  onClick={() => setPage(num)}
+                  className={`w-9 h-9 rounded-lg border text-sm font-medium transition-all ${
+                    page === num 
+                      ? "bg-[#465fff] border-[#465fff] text-white shadow-md dark:bg-[#374bd1] dark:border-[#374bd1]" 
+                      : "border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  {num}
+                </button>
+              );
+            })}
+        </div>
 
         <input
           type="number"
@@ -215,29 +264,33 @@ const openModal = (lead, mode) => {
           value={pageInput}
           onChange={(e) => setPageInput(e.target.value)}
           onKeyDown={handleJumpPage}
-          className="w-20 text-center border rounded-md py-2 outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+          className="w-16 text-center border border-gray-300 rounded-lg py-2 text-sm outline-none focus:ring-2 focus:ring-[#465fff]/50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200"
         />
 
         <button
           onClick={nextPage}
           disabled={page === totalPages}
-          className={`px-3 py-2 border rounded-md flex items-center gap-1 text-sm ${
-            page === totalPages ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-200 dark:hover:bg-gray-800"
-          }`}
+          className={`px-3 py-2 border rounded-lg flex items-center gap-1 text-sm font-medium transition-colors 
+            ${
+              page === totalPages 
+              ? "opacity-50 cursor-not-allowed border-gray-200 text-gray-400 dark:border-gray-800 dark:text-gray-600" 
+              : "border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            }`}
         >
-          Next <ChevronRight size={18} />
+          Next <ChevronRight size={16} />
         </button>
 
       </div>
+      
       <LeadDetailsModal
-  open={modalOpen}
-  onClose={(shouldRefresh) => {
-    setModalOpen(false);
-    if (shouldRefresh) fetchLeads();
-  }}
-  data={selectedLead}
-  mode={modalMode}
-/>
+        open={modalOpen}
+        onClose={(shouldRefresh) => {
+          setModalOpen(false);
+          if (shouldRefresh) fetchLeads();
+        }}
+        data={selectedLead}
+        mode={modalMode}
+      />
 
     </div>
   );

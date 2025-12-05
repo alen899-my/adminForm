@@ -10,16 +10,19 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
   const [form, setForm] = useState({});
   const [editMode, setEditMode] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  
   // Preview helper for local file blob
   const previewLocalFile = (file) => (file ? URL.createObjectURL(file) : null);
 
   // Sync values on open
-  useEffect(() => {
-    if (open) {
-      setForm(data);
-      setEditMode(mode === "edit");
-    }
-  }, [open, data, mode]);
+ useEffect(() => {
+  if (open) {
+    const { status, ...rest } = data;
+    setForm(rest);
+    setEditMode(mode === "edit");
+  }
+}, [open, data, mode]);
+
 
   // Close when clicking outside
   useEffect(() => {
@@ -59,20 +62,52 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
 
   const formatFileId = (id) => String(id).replace(/ObjectId\("(.+)"\)/, "$1");
 
+  const StatusToggle = ({ lead, index }) => {
+
+    const toggleStatus = async () => {
+      const newStatus = lead.status === "pending" ? "completed" : "pending";
+
+      // 🔥 Call new API
+      await fetch(`/api/update-status/${lead._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      // 🔥 Update UI
+      updateRowStatus(index, newStatus);
+    };
+
+    return (
+      <button
+        onClick={toggleStatus}
+        className={`px-3 py-1 rounded-md text-xs font-semibold transition border shadow-sm
+          ${
+            lead.status === "completed"
+              ? "bg-green-600 text-white hover:bg-green-700 border-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+          }`}
+      >
+        {lead.status === "completed" ? "Completed" : "Pending"}
+      </button>
+    );
+  };
+
   // ---- SAVE ----
   const handleSave = async () => {
     const fd = new FormData();
 
     Object.entries(form).forEach(([key, val]) => {
-      if (
-        typeof val !== "object" &&
-        key !== "attachments" &&
-        key !== "_id" &&
-        key !== "__v"
-      ) {
-        fd.append(key, val);
-      }
-    });
+  if (
+    typeof val !== "object" &&
+    key !== "attachments" &&
+    key !== "_id" &&
+    key !== "__v" &&
+    key !== "status"   // 🚀 added — prevent status from being edited via modal
+  ) {
+    fd.append(key, val);
+  }
+});
 
     ["companyLogo", "clientLogo", "vatCertificate", "tradeLicense"].forEach((field) => {
       if (form[field] instanceof File) {
@@ -87,20 +122,20 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
 
     const result = await res.json();
     if (result.success) {
-  setToast({ show: true, message: "Updated Successfully!", type: "success" });
+      setToast({ show: true, message: "Updated Successfully!", type: "success" });
 
-  setTimeout(() => {
-    setToast({ show: false, message: "", type: "" });
-    setEditMode(false);
-    onClose(true);
-  }, 2000);
-} else {
-  setToast({ show: true, message: result.message || "Update failed", type: "error" });
+      setTimeout(() => {
+        setToast({ show: false, message: "", type: "" });
+        setEditMode(false);
+        onClose(true);
+      }, 2000);
+    } else {
+      setToast({ show: true, message: result.message || "Update failed", type: "error" });
 
-  setTimeout(() => {
-    setToast({ show: false, message: "", type: "" });
-  }, 3000);
-}
+      setTimeout(() => {
+        setToast({ show: false, message: "", type: "" });
+      }, 3000);
+    }
 
   };
 
@@ -113,15 +148,16 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
           ref={modalRef}
           className="w-full max-w-6xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col"
         >
-            {toast.show && (
-  <div
-    className={`fixed top-5 right-5 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium transition-all duration-300 z-[200] ${
-      toast.type === "success" ? "bg-green-600" : "bg-red-600"
-    }`}
-  >
-    {toast.message}
-  </div>
-)}
+          {toast.show && (
+            <div
+              className={`fixed top-5 right-5 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium transition-all duration-300 z-[200] ${
+                toast.type === "success" ? "bg-green-600" : "bg-red-600"
+              }`}
+            >
+              {toast.message}
+            </div>
+          )}
+
           {/* HEADER */}
           <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-300 dark:border-gray-700 px-5 py-3 flex justify-between items-center">
             <div>
@@ -179,10 +215,15 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
 
               {/* TEXT FIELDS */}
               {Object.entries(data).map(([key]) => {
-                if (key === "_id" || key === "__v" || typeof data[key] === "object") return null;
-
+  if (
+    key === "_id" ||
+    key === "__v" ||
+    key === "status" || // 🚀 hides status label & field
+    typeof data[key] === "object"
+  )
+    return null;
                 return (
-                  <div key={key} className="group flex flex-col p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/40 hover:border-gray-400 dark:hover:border-gray-600 transition-all">
+                  <div key={key} className="group flex flex-col p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/40 hover:border-gray-400 dark:hover:border-gray-500 transition-all">
                     <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium mb-1">
                       {key.replace(/([A-Z])/g, " $1")}
                     </label>
@@ -190,7 +231,7 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
                     {editMode ? (
                       <input
                         type="text"
-                        className="w-full p-2 text-[15px] border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-normal"
+                        className="w-full p-2 text-[15px] border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-normal"
                         value={form[key] || ""}
                         onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                       />
@@ -339,10 +380,10 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
                 width={600} 
                 height={600} 
                 alt="Preview" 
-                className="rounded-lg shadow-2xl max-w-[90vw] max-h-[90vh] object-contain bg-white" 
+                className="rounded-lg shadow-2xl max-w-[90vw] max-h-[90vh] object-contain bg-white dark:bg-gray-900" 
             />
             <button 
-                className="absolute -top-4 -right-4 bg-white text-gray-900 hover:bg-gray-200 p-2 rounded-full shadow-lg transition-transform hover:scale-110" 
+                className="absolute -top-4 -right-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded-full shadow-lg transition-transform hover:scale-110" 
                 onClick={() => setPreviewSrc(null)}
             >
               <X size={20} />

@@ -31,6 +31,12 @@ const LeadSchema = new mongoose.Schema(
     adminEmail: String,
     adminPhone: String,
     trainingRequired: String,
+    status: {
+  type: String,
+  enum: ["pending", "completed"],
+  default: "pending",
+},
+
 
     attachments: [
       {
@@ -42,6 +48,7 @@ const LeadSchema = new mongoose.Schema(
 
     documentSubmitMethod: String,
   },
+  
   { timestamps: true }
 );
 

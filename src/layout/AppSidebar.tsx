@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
   {
     name: "Customers",
     icon: <TableIcon />,
-    path: "/basic-tables",
+    path: "/all-customers",
   },
 ];
 
