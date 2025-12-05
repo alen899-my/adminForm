@@ -132,17 +132,42 @@ const openModal = (lead, mode) => {
   <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
     {lead.adminPhone}
   </TableCell>
-
 <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
   <div className="flex items-center justify-center gap-3">
-                          <button  onClick={() => openModal(lead, "view")} className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#27AE60]/10 text-[#27AE60] border-[#27AE60]/40 hover:bg-[#27AE60]/20 transition-all">
-                            <Eye size={16} />
-                          </button>
-                          <button onClick={() => openModal(lead, "edit")} className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#E67E22]/10 text-[#E67E22] border-[#E67E22]/40 hover:bg-[#E67E22]/20 transition-all">
-                            <Pencil size={16} />
-                          </button>
-                        </div>
-                      </TableCell>
+
+    {/* VIEW BUTTON WITH TOOLTIP */}
+    <div className="relative group">
+      <button
+        onClick={() => openModal(lead, "view")}
+        className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#27AE60]/10 text-[#27AE60] border-[#27AE60]/40 hover:bg-[#27AE60]/20 transition-all"
+      >
+        <Eye size={16} />
+      </button>
+
+      {/* Tooltip */}
+      <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-black text-white opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200">
+        View Details
+      </span>
+    </div>
+
+    {/* EDIT BUTTON WITH TOOLTIP */}
+    <div className="relative group">
+      <button
+        onClick={() => openModal(lead, "edit")}
+        className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#E67E22]/10 text-[#E67E22] border-[#E67E22]/40 hover:bg-[#E67E22]/20 transition-all"
+      >
+        <Pencil size={16} />
+      </button>
+
+      {/* Tooltip */}
+      <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-black text-white opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200">
+        Edit Lead
+      </span>
+    </div>
+
+  </div>
+</TableCell>
+
                     </>
                   )}
                 </TableRow>
