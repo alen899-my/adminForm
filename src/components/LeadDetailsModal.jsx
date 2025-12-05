@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { X, Download, Eye as ViewIcon } from "lucide-react";
+import { X, Download, Eye as ViewIcon, Pencil } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 export default function LeadDetailsModal({ open, onClose, data, mode }) {
@@ -10,7 +10,10 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
   const [form, setForm] = useState({});
   const [editMode, setEditMode] = useState(false);
 
-  // Sync form on open
+  // Preview helper for local file blob
+  const previewLocalFile = (file) => (file ? URL.createObjectURL(file) : null);
+
+  // Sync values on open
   useEffect(() => {
     if (open) {
       setForm(data);
@@ -18,7 +21,7 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
     }
   }, [open, data, mode]);
 
-  // Close on background click
+  // Close when clicking outside
   useEffect(() => {
     if (!open) return;
 
@@ -48,57 +51,53 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
 
   if (!open || !data) return null;
 
-  // Build attachment structure
+  // Attachments reference
   const files = { companyLogo: null, clientLogo: null, vatCertificate: null, tradeLicense: null };
   data.attachments?.forEach((file) => {
     if (!files[file.fieldname]) files[file.fieldname] = file;
   });
 
-  // Fix ObjectId formatting from DB output
   const formatFileId = (id) => String(id).replace(/ObjectId\("(.+)"\)/, "$1");
 
-  // SAVE CHANGES
- const handleSave = async () => {
-  const fd = new FormData();
+  // ---- SAVE ----
+  const handleSave = async () => {
+    const fd = new FormData();
 
-  // Send only editable normal fields
-  Object.entries(form).forEach(([key, val]) => {
-    if (
-      typeof val !== "object" && 
-      key !== "attachments" && 
-      key !== "_id" &&
-      key !== "__v"
-    ) {
-      fd.append(key, val);
+    Object.entries(form).forEach(([key, val]) => {
+      if (
+        typeof val !== "object" &&
+        key !== "attachments" &&
+        key !== "_id" &&
+        key !== "__v"
+      ) {
+        fd.append(key, val);
+      }
+    });
+
+    ["companyLogo", "clientLogo", "vatCertificate", "tradeLicense"].forEach((field) => {
+      if (form[field] instanceof File) {
+        fd.append(field, form[field]);
+      }
+    });
+
+    const res = await fetch(`/api/all-leads/${form._id}`, {
+      method: "PUT",
+      body: fd,
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      alert("Updated!");
+      setEditMode(false);
+      onClose(true);
+    } else {
+      alert(result.message || "Update failed");
     }
-  });
-
-  // Send files only if replaced
-  ["companyLogo", "clientLogo", "vatCertificate", "tradeLicense"].forEach(field => {
-    if (form[field] instanceof File) {
-      fd.append(field, form[field]);
-    }
-  });
-
-  const res = await fetch(`/api/all-leads/${form._id}`, {
-    method: "PUT",
-    body: fd,
-  });
-
-  const result = await res.json();
-  if (result.success) {
-    alert("Updated!");
-    setEditMode(false);
-    onClose(true);
-  } else {
-    alert(result.message || "Update failed");
-  }
-};
-
+  };
 
   return (
     <>
-      {/* MAIN MODAL */}
+      {/* ----------- MAIN MODAL ----------- */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-[99]">
         <div
           ref={modalRef}
@@ -141,10 +140,10 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
             </div>
           </div>
 
-          {/* CONTENT */}
+          {/* ----------- CONTENT GRID ----------- */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
 
-            {/* ---- TEXT FIELDS ---- */}
+            {/* TEXT FIELDS */}
             {Object.entries(data).map(([key]) => {
               if (key === "_id" || key === "__v" || typeof data[key] === "object") return null;
 
@@ -168,74 +167,103 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
               );
             })}
 
-            {/* ---- IMAGE FILES ---- */}
-            {["companyLogo", "clientLogo"].map((fileKey) => {
-              const file = files[fileKey];
-              const id = file ? formatFileId(file.fileId) : null;
+            {/* ---- IMAGE FIELDS ---- */}
+            {["companyLogo", "clientLogo"].map((field) => {
+              const stored = files[field];
+              const storedId = stored ? formatFileId(stored.fileId) : null;
+              const newFile = form[field] instanceof File ? form[field] : null;
+              const previewURL = newFile ? previewLocalFile(newFile) : storedId ? `/api/all-leads/files/${storedId}` : null;
 
               return (
-                <div key={fileKey} className="p-3 border rounded-md dark:border-gray-700 text-center">
-                  <p className="text-[11px] uppercase text-gray-500 dark:text-gray-400 font-semibold">
-                    {fileKey}
-                  </p>
+                <div key={field} className="p-3 border rounded-md dark:border-gray-700 text-center">
+                  <p className="text-[11px] uppercase font-semibold text-gray-500 dark:text-gray-400">{field}</p>
 
-                  {id ? (
-                    <>
-                      <Image
-                        src={`/api/all-leads/files/${id}`}
-                        width={120}
-                        height={120}
-                        alt={file.filename}
-                        className="mt-3 rounded border cursor-pointer hover:opacity-80 transition"
-                        onClick={() => setPreviewSrc(`/api/all-leads/files/${id}`)}
-                      />
-
-                      <a href={`/api/all-leads/files/${id}`} download className="mt-2 inline-block p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
-                        <Download />
-                      </a>
-
-                      {editMode && (
-                        <input type="file" className="mt-2" accept="image/*" onChange={(e) => setForm({ ...form, [fileKey]: e.target.files[0] })} />
-                      )}
-                    </>
-                  ) : editMode ? (
-                    <input type="file" className="mt-3" accept="image/*" onChange={(e) => setForm({ ...form, [fileKey]: e.target.files[0] })} />
+                  {previewURL ? (
+                    <Image
+                      src={previewURL}
+                      width={120}
+                      height={120}
+                      alt="Preview"
+                      className="mt-3 rounded border object-cover mx-auto cursor-pointer hover:opacity-70 transition"
+                      onClick={() => setPreviewSrc(previewURL)}
+                    />
                   ) : (
-                    <p className="mt-3 text-gray-400 dark:text-gray-600">No file</p>
+                    <p className="mt-2 text-gray-400 dark:text-gray-600">No file</p>
                   )}
+
+                  <div className="flex justify-center gap-2 mt-2">
+                    {storedId && !newFile && (
+                      <a href={`/api/all-leads/files/${storedId}`} download className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+                        <Download size={18} />
+                      </a>
+                    )}
+
+                    {editMode && (
+                      <button
+                        className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-1"
+                        onClick={() => document.getElementById(`file-${field}`).click()}
+                      >
+                        <Pencil size={18} />
+                        Replace
+                      </button>
+                    )}
+
+                    <input
+                      id={`file-${field}`}
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => setForm({ ...form, [field]: e.target.files[0] })}
+                    />
+                  </div>
                 </div>
               );
             })}
 
-            {/* ---- PDF FILES ---- */}
-            {["vatCertificate", "tradeLicense"].map((fileKey) => {
-              const file = files[fileKey];
-              const id = file ? formatFileId(file.fileId) : null;
+            {/* ---- PDF FIELDS ---- */}
+            {["vatCertificate", "tradeLicense"].map((field) => {
+              const stored = files[field];
+              const storedId = stored ? formatFileId(stored.fileId) : null;
+              const newFile = form[field] instanceof File ? form[field] : null;
+              const fileName = newFile ? newFile.name : stored?.filename;
 
               return (
-                <div key={fileKey} className="p-3 border rounded-md dark:border-gray-700">
-                  <p className="text-[11px] uppercase text-gray-500 dark:text-gray-400 font-semibold">{fileKey}</p>
+                <div key={field} className="p-3 border rounded-md dark:border-gray-700">
+                  <p className="text-[11px] uppercase text-gray-500 dark:text-gray-400 font-semibold">{field}</p>
 
-                  {id ? (
+                  <div className="flex items-center gap-3 mt-3">
+                    {storedId && !newFile && (
+                      <button className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700" onClick={() => window.open(`/api/all-leads/files/${storedId}`, "_blank")}>
+                        <ViewIcon size={18} />
+                      </button>
+                    )}
+
+                    {storedId && !newFile && (
+                      <a href={`/api/all-leads/files/${storedId}`} download className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+                        <Download size={18} />
+                      </a>
+                    )}
+
+                    <span className="text-sm dark:text-gray-300">{fileName || "No File"}</span>
+                  </div>
+
+                  {editMode && (
                     <>
-                      <div className="flex items-center gap-3 mt-3">
-                       
+                      <button
+                        className="mt-2 p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-1"
+                        onClick={() => document.getElementById(`file-${field}`).click()}
+                      >
+                        <Pencil size={18} /> Replace
+                      </button>
 
-                        <a href={`/api/all-leads/files/${id}`} download className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
-                          <Download />
-                        </a>
-
-                        <span className="text-sm dark:text-gray-300">{file.filename}</span>
-                      </div>
-
-                      {editMode && (
-                        <input type="file" accept="application/pdf" className="mt-2" onChange={(e) => setForm({ ...form, [fileKey]: e.target.files[0] })} />
-                      )}
+                      <input
+                        id={`file-${field}`}
+                        type="file"
+                        className="hidden"
+                        accept="application/pdf"
+                        onChange={(e) => setForm({ ...form, [field]: e.target.files[0] })}
+                      />
                     </>
-                  ) : editMode ? (
-                    <input type="file" accept="application/pdf" className="mt-3" onChange={(e) => setForm({ ...form, [fileKey]: e.target.files[0] })} />
-                  ) : (
-                    <p className="mt-3 text-gray-400 dark:text-gray-600">No file</p>
                   )}
                 </div>
               );
@@ -244,7 +272,7 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
         </div>
       </div>
 
-      {/* IMAGE PREVIEW POPUP */}
+      {/* -------- IMAGE PREVIEW POPUP -------- */}
       {previewSrc && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-[100]" onClick={() => setPreviewSrc(null)}>
           <div className="relative" onClick={(e) => e.stopPropagation()}>
