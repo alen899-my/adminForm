@@ -84,7 +84,7 @@ export default function SignInForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8">
+      <div className="w-full max-w-md border border-gray-400 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8">
 
         <div className="text-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
@@ -139,12 +139,7 @@ export default function SignInForm() {
               </span>
             </div>
 
-            <Link
-              href="/reset-password"
-              className="text-sm text-blue-600 hover:underline"
-            >
-              Forgot password?
-            </Link>
+           
           </div>
 
           <Button className="w-full" disabled={loading}>

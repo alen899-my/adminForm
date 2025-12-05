@@ -24,6 +24,8 @@ export default function LeadsTable() {
 
   // Page jump input
   const [pageInput, setPageInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState(""); // "" = all
   const updateRowData = (updatedLead) => {
     setLeads(prev =>
       prev.map(lead =>
@@ -31,28 +33,33 @@ export default function LeadsTable() {
       )
     );
   };
-  const fetchLeads = async () => {
-    setLoading(true);
 
-    try {
-      const res = await fetch(`/api/all-leads?page=${page}&limit=${limit}`);
-      const data = await res.json();
+  //search
+ const fetchLeads = async () => {
+  setLoading(true);
 
-      if (data.success) {
-        // smooth transition (only row content)
-        setLeads([]);
-        setTimeout(() => {
-          setLeads(data.leads);
-          setTotalPages(data.pagination.totalPages);
-        }, 120);
-      }
-    } catch (err) {
-      console.log("❌ Fetch error:", err);
+  try {
+    const res = await fetch(`/api/all-leads?page=${page}&limit=${limit}&search=${search}`);
+    const data = await res.json();
+
+    if (data.success) {
+      setTimeout(() => {
+        setLeads(data.leads);
+        setTotalPages(data.pagination.totalPages);
+      }, 120);
     }
+  } catch (err) {
+    console.log("❌ Fetch error:", err);
+  }
 
-    setTimeout(() => setLoading(false), 120);
-  };
-    // 🔥 Update state instantly when toggled
+  setTimeout(() => setLoading(false), 120);
+};
+
+// Call search immediately or only when pressing button
+const handleSearch = () => {
+  setPage(1); 
+  fetchLeads();
+};
   const updateRowStatus = (index, newStatus) => {
     setLeads((prev) => {
       const updated = [...prev];
@@ -121,12 +128,29 @@ const openModal = (lead, mode) => {
   const prevPage = () => page > 1 && setPage(page - 1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2 ">
+  <div className="flex items-center gap-2 w-full max-w-md">
+  <input
+    type="text"
+    placeholder="Search by name, email, phone..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-sm dark:bg-gray-900 dark:text-gray-200"
+  />
 
+  <button
+    onClick={handleSearch}
+    className="px-4 py-2 bg-[#465fff] hover:bg-[#374bd1] text-white rounded-lg text-sm"
+  >
+     Search
+  </button>
+</div>
       {/* ---------- SCROLLABLE TABLE CONTAINER ---------- */}
       <div className="rounded-xl border border-gray-300 bg-white shadow-xl dark:bg-gray-900 dark:border-gray-700 overflow-hidden">
 
-        {/* Scroll only table, not page */}
+       
+ 
+
         <div className="max-h-[600px] overflow-y-auto custom-scrollbar"> {/* ✅ Scroll bar only table */}
           <Table className="w-full border-collapse">
             <TableHeader>
