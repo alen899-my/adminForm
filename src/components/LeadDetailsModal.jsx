@@ -232,11 +232,7 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
                   <p className="text-[11px] uppercase text-gray-500 dark:text-gray-400 font-semibold">{field}</p>
 
                   <div className="flex items-center gap-3 mt-3">
-                    {storedId && !newFile && (
-                      <button className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700" onClick={() => window.open(`/api/all-leads/files/${storedId}`, "_blank")}>
-                        <ViewIcon size={18} />
-                      </button>
-                    )}
+                  
 
                     {storedId && !newFile && (
                       <a href={`/api/all-leads/files/${storedId}`} download className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
