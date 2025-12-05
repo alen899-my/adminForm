@@ -30,12 +30,12 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Overview",
-    path: "/",
+    path: "/admin",
   },
   {
     name: "Customers",
     icon: <TableIcon />,
-    path: "/all-customers",
+    path: "/admin/all-customers",
   },
 ];
 

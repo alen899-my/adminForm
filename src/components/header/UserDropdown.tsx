@@ -20,10 +20,17 @@ export default function UserDropdown() {
   }
 
   function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    router.push("/signin");
-  }
+  // Remove localStorage values
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+
+  // Clear cookies (overwrite with expired date)
+  document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+  document.cookie = "role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+
+  // Redirect to login
+  router.replace("/signin");
+}
 
   // 🔥 Load logged-in user info from localStorage
   useEffect(() => {

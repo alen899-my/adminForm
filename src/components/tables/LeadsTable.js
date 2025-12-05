@@ -56,36 +56,38 @@ export default function LeadsTable() {
     });
   };
 
-  const StatusToggle = ({ lead, index }) => {
+const StatusToggle = ({ lead, index }) => {
 
   const toggleStatus = async () => {
     const newStatus = lead.status === "pending" ? "completed" : "pending";
 
-    // 🔥 Call new API
     await fetch(`/api/update-status/${lead._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
 
-    // 🔥 Update UI
     updateRowStatus(index, newStatus);
   };
 
   return (
-    <button
+    <span
       onClick={toggleStatus}
-      className={`px-3 py-1 rounded-md text-xs font-semibold transition border shadow-sm
+      className={`
+        inline-flex items-center justify-center px-3 py-1 text-[11px] font-medium cursor-pointer rounded-full border transition
         ${
           lead.status === "completed"
-            ? "bg-green-600 text-white hover:bg-green-700 border-green-700 dark:bg-green-700 dark:hover:bg-green-600"
-            : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
-        }`}
+            ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200 hover:border-green-400 dark:bg-green-700 dark:text-white dark:border-green-600 dark:hover:bg-green-600"
+            : "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200 hover:border-yellow-400 dark:bg-yellow-600 dark:text-white dark:border-yellow-500 dark:hover:bg-yellow-500"
+        }
+      `}
     >
       {lead.status === "completed" ? "Completed" : "Pending"}
-    </button>
+    </span>
   );
 };
+
+
 
 
 const openModal = (lead, mode) => {
@@ -218,69 +220,105 @@ const openModal = (lead, mode) => {
           </Table>
         </div>
       </div>
+{/* ---------- PAGINATION ---------- */}
+{/* ---------- PAGINATION ---------- */}
+<div className="flex items-center justify-center gap-2 py-4">
 
-      {/* ---------- PAGINATION ---------- */}
-      <div className="flex items-center justify-center gap-3 py-2">
+  {/* Prev Button */}
+  <button
+    onClick={prevPage}
+    disabled={page === 1}
+    className={`px-3 py-2 rounded-lg text-sm flex items-center gap-1 font-medium border transition-all 
+      ${
+        page === 1
+          ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-400 dark:border-gray-700 dark:text-gray-600"
+          : "border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+      }`}
+  >
+    <ChevronLeft size={16} /> Prev
+  </button>
 
-        <button
-          onClick={prevPage}
-          disabled={page === 1}
-          className={`px-3 py-2 border rounded-lg flex items-center gap-1 text-sm font-medium transition-colors 
-            ${
-              page === 1 
-              ? "opacity-50 cursor-not-allowed border-gray-200 text-gray-400 dark:border-gray-800 dark:text-gray-600" 
-              : "border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            }`}
-        >
-          <ChevronLeft size={16} /> Prev
-        </button>
+  {/* Page 1 */}
+  <button
+    onClick={() => setPage(1)}
+    className={`w-9 h-9 rounded-lg border text-sm font-medium transition-all 
+      ${
+        page === 1
+          ? "bg-[#465fff] border-[#465fff] text-white shadow-md dark:bg-[#374bd1] dark:border-[#374bd1]"
+          : "border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+      }`}
+  >
+    1
+  </button>
 
-        <div className="flex items-center gap-1">
-          {[...Array(totalPages)]
-            .slice(Math.max(0, page - 3), page + 2)
-            .map((_, i) => {
-              const num = i + (page > 3 ? page - 2 : 1);
-              if (num > totalPages) return null;
+  {/* Page 2 */}
+  {totalPages > 1 && (
+    <button
+      onClick={() => setPage(2)}
+      className={`w-9 h-9 rounded-lg border text-sm font-medium transition-all 
+        ${
+          page === 2
+            ? "bg-[#465fff] border-[#465fff] text-white shadow-md dark:bg-[#374bd1] dark:border-[#374bd1]"
+            : "border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+        }`}
+    >
+      2
+    </button>
+  )}
 
-              return (
-                <button
-                  key={num}
-                  onClick={() => setPage(num)}
-                  className={`w-9 h-9 rounded-lg border text-sm font-medium transition-all ${
-                    page === num 
-                      ? "bg-[#465fff] border-[#465fff] text-white shadow-md dark:bg-[#374bd1] dark:border-[#374bd1]" 
-                      : "border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  {num}
-                </button>
-              );
-            })}
-        </div>
+  {/* Ellipsis if far away */}
+  {page > 3 && (
+    <span className="px-2 text-gray-500 dark:text-gray-400">...</span>
+  )}
 
-        <input
-          type="number"
-          placeholder="Go"
-          value={pageInput}
-          onChange={(e) => setPageInput(e.target.value)}
-          onKeyDown={handleJumpPage}
-          className="w-16 text-center border border-gray-300 rounded-lg py-2 text-sm outline-none focus:ring-2 focus:ring-[#465fff]/50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200"
-        />
+  {/* Current Page Input */}
+  <input
+    type="number"
+    placeholder={page}
+    value={pageInput}
+    onChange={(e) => setPageInput(e.target.value)}
+    onKeyDown={handleJumpPage}
+    className="w-16 text-center border border-gray-400 rounded-lg py-2 text-sm outline-none 
+      focus:ring-2 focus:ring-[#465fff]/50 
+      dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200"
+  />
 
-        <button
-          onClick={nextPage}
-          disabled={page === totalPages}
-          className={`px-3 py-2 border rounded-lg flex items-center gap-1 text-sm font-medium transition-colors 
-            ${
-              page === totalPages 
-              ? "opacity-50 cursor-not-allowed border-gray-200 text-gray-400 dark:border-gray-800 dark:text-gray-600" 
-              : "border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            }`}
-        >
-          Next <ChevronRight size={16} />
-        </button>
+  {/* Ellipsis before last page */}
+  {page < totalPages - 2 && (
+    <span className="px-2 text-gray-500 dark:text-gray-400">...</span>
+  )}
 
-      </div>
+  {/* Last Page */}
+  {totalPages > 2 && (
+    <button
+      onClick={() => setPage(totalPages)}
+      className={`w-9 h-9 rounded-lg border text-sm font-medium transition-all 
+        ${
+          page === totalPages
+            ? "bg-[#465fff] border-[#465fff] text-white shadow-md dark:bg-[#374bd1] dark:border-[#374bd1]"
+            : "border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+        }`}
+    >
+      {totalPages}
+    </button>
+  )}
+
+  {/* Next Button */}
+  <button
+    onClick={nextPage}
+    disabled={page === totalPages}
+    className={`px-3 py-2 rounded-lg text-sm flex items-center gap-1 font-medium border transition-all 
+      ${
+        page === totalPages
+          ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-400 dark:border-gray-700 dark:text-gray-600"
+          : "border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+      }`}
+  >
+    Next <ChevronRight size={16} />
+  </button>
+</div>
+
+
       
       <LeadDetailsModal
         open={modalOpen}

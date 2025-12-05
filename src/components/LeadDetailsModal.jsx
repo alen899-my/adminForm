@@ -15,10 +15,9 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
   const previewLocalFile = (file) => (file ? URL.createObjectURL(file) : null);
 
   // Sync values on open
- useEffect(() => {
+useEffect(() => {
   if (open) {
-    const { status, ...rest } = data;
-    setForm(rest);
+    setForm(data);              // keep status inside form
     setEditMode(mode === "edit");
   }
 }, [open, data, mode]);
@@ -102,8 +101,9 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
     typeof val !== "object" &&
     key !== "attachments" &&
     key !== "_id" &&
-    key !== "__v" &&
-    key !== "status"   // 🚀 added — prevent status from being edited via modal
+    key !== "__v"
+
+   
   ) {
     fd.append(key, val);
   }
@@ -212,13 +212,46 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
           {/* ----------- CONTENT GRID ----------- */}
           <div className="p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {/* STATUS DROPDOWN (Only visible during edit mode) */}
+                <div className="group flex flex-col p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/40 hover:border-gray-400 dark:hover:border-gray-500 transition-all">
+                <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium mb-1">
+                    Status
+                </label>
+
+                {editMode ? (
+                    <select
+                    value={form.status || "pending"}
+                    onChange={(e) => setForm({ ...form, status: e.target.value })}
+                    className="w-full p-2 text-[15px] border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-normal"
+                    >
+                    <option value="pending">Pending</option>
+                    
+                    <option value="completed">Completed</option>
+                    </select>
+                ) : (
+                    <span
+                    className={`
+                        inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full w-fit
+                        ${
+                        data.status === "completed"
+                            ? "bg-green-100 text-green-700 dark:bg-green-700 dark:text-white"
+                            : data.status === "ongoing"
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-white"
+                            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-white"
+                        }
+                    `}
+                    >
+                    {data.status}
+                    </span>
+                )}
+                </div>
 
               {/* TEXT FIELDS */}
               {Object.entries(data).map(([key]) => {
   if (
     key === "_id" ||
     key === "__v" ||
-    key === "status" || // 🚀 hides status label & field
+     key === "status" ||
     typeof data[key] === "object"
   )
     return null;
