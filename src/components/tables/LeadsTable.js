@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -9,135 +8,205 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-
+import { Eye, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
+import LeadDetailsModal from "../LeadDetailsModal";
 export default function LeadsTable() {
   const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedLead, setSelectedLead] = useState(null);
+const [openModal, setOpenModal] = useState(false);
+  // Pagination
+  const [page, setPage] = useState(1);
+  const limit = 50; // ✅ SHOW 50 ROWS
+  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    const fetchLeads = async () => {
-      const res = await fetch("/api/all-leads");
+  // Page jump input
+  const [pageInput, setPageInput] = useState("");
+
+  const fetchLeads = async () => {
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/all-leads?page=${page}&limit=${limit}`);
       const data = await res.json();
-      if (data.success) setLeads(data.leads);
-    };
+
+      if (data.success) {
+        // smooth transition (only row content)
+        setLeads([]);
+        setTimeout(() => {
+          setLeads(data.leads);
+          setTotalPages(data.pagination.totalPages);
+        }, 120);
+      }
+    } catch (err) {
+      console.log("❌ Fetch error:", err);
+    }
+
+    setTimeout(() => setLoading(false), 120);
+  };
+
+const handleView = (lead) => {
+  setSelectedLead(lead);
+  setOpenModal(true);
+};
+  useEffect(() => {
     fetchLeads();
-  }, []);
+  }, [page]);
+
+  const handleJumpPage = (e) => {
+    if (e.key === "Enter") {
+      let num = Number(pageInput);
+
+      if (!num || num < 1) num = 1;
+      if (num > totalPages) num = totalPages; // ✅ Jump to last page if too big
+
+      setPage(num);
+      setPageInput("");
+    }
+  };
+
+  const nextPage = () => page < totalPages && setPage(page + 1);
+  const prevPage = () => page > 1 && setPage(page - 1);
 
   return (
-    <div className="overflow-auto rounded-xl border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-      <Table className="min-w-[2800px]">
-        {/* ---------------- Header ---------------- */}
-        <TableHeader>
-          <TableRow className="bg-gray-100 dark:bg-gray-800 border-b border-gray-300">
-            {/* Location & Basics */}
-            {[
-              "Location Name","Capacity","Wait Time","Maps URL","Latitude","Longitude","Timing","Address",
-              "Lobbies","Key Rooms","Distance",
-              "Supervisor User","Validation User","Report User",
-              "Ticket Type","Fee Type","Ticket Pricing","VAT Type",
-              "Driver Count","Driver List",
-              "Admin Name","Admin Email","Admin Phone","Training Required",
-              "Company Logo","Client Logo","VAT Certificate","Trade License",
-              "Submit Method","Created"
-            ].map((heading) => (
-              <TableCell
-                key={heading}
-                className="px-5 py-3 font-semibold text-gray-700 dark:text-gray-200 text-xs uppercase border-r border-gray-300 whitespace-nowrap"
-              >
-                {heading}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHeader>
+    <div className="space-y-6">
 
-        {/* ---------------- Body ---------------- */}
-        <TableBody>
-          {leads.map((lead) => {
-            // classified attachment mapping
-            const files = {
-              companyLogo: null,
-              clientLogo: null,
-              vatCertificate: null,
-              tradeLicense: null,
-            };
+      {/* ---------- SCROLLABLE TABLE CONTAINER ---------- */}
+      <div className="rounded-lg border bg-white shadow-lg dark:bg-gray-900 dark:border-gray-700 overflow-hidden">
 
-            lead.attachments?.forEach((file) => {
-              if (files[file.fieldname] === null) files[file.fieldname] = file;
-            });
-
-            return (
-              <TableRow
-                key={lead._id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-800 transition border-b border-gray-300"
-              >
-                {/* All text fields */}
-                {[
-                  lead.locationName,lead.capacity,lead.waitTime,lead.mapsUrl,lead.latitude,lead.longitude,lead.timing,
-                  lead.address,lead.lobbies,lead.keyRooms,lead.distance,
-                  lead.supervisorUser,lead.validationUser,lead.reportUser,
-                  lead.ticketType,lead.feeType,lead.ticketPricing,lead.vatType,
-                  lead.driverCount,lead.driverList,
-                  lead.adminName,lead.adminEmail,lead.adminPhone,lead.trainingRequired
-                ].map((value, index) => (
+        {/* Scroll only table, not page */}
+        <div className="max-h-[600px] overflow-y-auto"> {/* ✅ Scroll bar only table */}
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow className="bg-[#465fff]">
+                {["#","Location", "Capacity", "Admin Name", "Email", "Phone", "Actions"].map((heading) => (
                   <TableCell
-                    key={index}
-                    className="px-5 py-3 text-sm border-r border-gray-300 whitespace-nowrap dark:text-gray-300"
+                    key={heading}
+                    className="px-5 py-3 font-bold text-white text-xs uppercase tracking-wide whitespace-nowrap"
                   >
-                    {value || "—"}
+                    {heading}
                   </TableCell>
                 ))}
-
-                {/* Attachments: Logos */}
-                {["companyLogo", "clientLogo"].map((field) =>
-                  files[field] ? (
-                    <TableCell key={field} className="px-5 py-3 border-r border-gray-300">
-                      <Image
-                        src={`/api/all-leads/files/${files[field].fileId}`}
-                        width={50}
-                        height={50}
-                        className="rounded border object-cover"
-                        alt={files[field].filename}
-                      />
-                    </TableCell>
-                  ) : (
-                    <TableCell key={field} className="px-5 py-3 text-gray-400 text-sm border-r border-gray-300">
-                      —
-                    </TableCell>
-                  )
-                )}
-
-                {/* Attachments: PDFs */}
-                {["vatCertificate", "tradeLicense"].map((field) =>
-                  files[field] ? (
-                    <TableCell key={field} className="px-5 py-3 border-r border-gray-300">
-                      <a
-                        href={`/api/all-leads/files/${files[field].fileId}`}
-                        className="text-blue-600 underline text-sm"
-                        target="_blank"
-                        download
-                      >
-                        📄 {files[field].filename}
-                      </a>
-                    </TableCell>
-                  ) : (
-                    <TableCell key={field} className="px-5 py-3 text-gray-400 text-sm border-r border-gray-300">
-                      —
-                    </TableCell>
-                  )
-                )}
-
-                {/* Submit + Timestamp */}
-                <TableCell className="px-5 py-3 border-r border-gray-300">
-                  {lead.documentSubmitMethod}
-                </TableCell>
-
-                <TableCell className="px-5 py-3 text-sm text-gray-500 whitespace-nowrap">
-                  {new Date(lead.createdAt).toLocaleDateString()}
-                </TableCell>
               </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {(loading ? [...Array(limit)] : leads).map((lead, index) => (
+                <TableRow
+                  key={index}
+                  className={`transition-all duration-300 ${
+                    loading ? "opacity-40 translate-y-[2px]" : "opacity-100 translate-y-0"
+                  } ${
+                    index % 2 === 0
+                      ? "bg-white dark:bg-gray-900"
+                      : "bg-gray-100 dark:bg-gray-800"
+                  } hover:bg-[#E8F0FE] dark:hover:bg-gray-700`}
+                >
+                  {loading ? (
+                    <TableCell colSpan={6} className="animate-pulse px-5 py-3">
+                      <div className="w-full h-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                    </TableCell>
+                  ) : (
+                  <>
+                   <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700 text-center ">
+    {(page - 1) * limit + index + 1}
+  </TableCell>
+  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
+    {lead.locationName}
+  </TableCell>
+
+  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
+    {lead.capacity}
+  </TableCell>
+
+  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
+    {lead.adminName}
+  </TableCell>
+
+  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
+    {lead.adminEmail}
+  </TableCell>
+
+  <TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
+    {lead.adminPhone}
+  </TableCell>
+
+<TableCell className="px-5 py-3 border border-gray-300 dark:border-gray-700">
+  <div className="flex items-center justify-center gap-3">
+                          <button  onClick={() => handleView(lead)} className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#27AE60]/10 text-[#27AE60] border-[#27AE60]/40 hover:bg-[#27AE60]/20 transition-all">
+                            <Eye size={16} />
+                          </button>
+                          <button className="flex items-center justify-center w-8 h-8 rounded-md border bg-[#E67E22]/10 text-[#E67E22] border-[#E67E22]/40 hover:bg-[#E67E22]/20 transition-all">
+                            <Pencil size={16} />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* ---------- PAGINATION ---------- */}
+      <div className="flex items-center justify-center gap-3">
+
+        <button
+          onClick={prevPage}
+          disabled={page === 1}
+          className={`px-3 py-2 border rounded-md flex items-center gap-1 text-sm ${
+            page === 1 ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-200 dark:hover:bg-gray-800"
+          }`}
+        >
+          <ChevronLeft size={18} /> Prev
+        </button>
+
+        {[...Array(totalPages)]
+          .slice(Math.max(0, page - 3), page + 2)
+          .map((_, i) => {
+            const num = i + (page > 3 ? page - 2 : 1);
+            if (num > totalPages) return null;
+
+            return (
+              <button
+                key={num}
+                onClick={() => setPage(num)}
+                className={`w-9 h-9 rounded-md border text-sm transition ${
+                  page === num ? "bg-[#465fff] text-white" : "hover:bg-gray-200 dark:hover:bg-gray-800"
+                }`}
+              >
+                {num}
+              </button>
             );
           })}
-        </TableBody>
-      </Table>
+
+        <input
+          type="number"
+          placeholder="Go"
+          value={pageInput}
+          onChange={(e) => setPageInput(e.target.value)}
+          onKeyDown={handleJumpPage}
+          className="w-20 text-center border rounded-md py-2 outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+        />
+
+        <button
+          onClick={nextPage}
+          disabled={page === totalPages}
+          className={`px-3 py-2 border rounded-md flex items-center gap-1 text-sm ${
+            page === totalPages ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-200 dark:hover:bg-gray-800"
+          }`}
+        >
+          Next <ChevronRight size={18} />
+        </button>
+
+      </div>
+      <LeadDetailsModal 
+  open={openModal} 
+  onClose={() => setOpenModal(false)} 
+  data={selectedLead}
+/>
     </div>
   );
 }

@@ -41,7 +41,7 @@ export default function UserDropdown() {
       {/* Button (Shows Name on Header) */}
       <button
         onClick={toggleDropdown}
-        className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
+        className="flex items-center text-white dark:text-gray-400 dropdown-toggle"
       >
         <span className="block mr-1 font-medium text-theme-sm">
           {user.name}

@@ -30,7 +30,8 @@ export async function GET(req, { params }) {
     // Determine the correct Content-Disposition based on file type
     let contentDisposition = "inline"; // Default to inline for images and other types
     if (file.contentType === "application/pdf") {
-      contentDisposition = `attachment; filename="${file.filename}"`; // Trigger download for PDFs
+      contentDisposition = `inline; filename="${file.filename}"`;
+// Trigger download for PDFs
     }
 
     return new NextResponse(stream, {

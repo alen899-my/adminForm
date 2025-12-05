@@ -29,19 +29,14 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    name: "Overview",
+    path: "/",
   },
-  
-  
-
-
   {
-    name: "Tables",
+    name: "Customers",
     icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+    path: "/basic-tables",
   },
-  
 ];
 
 const othersItems: NavItem[] = [
@@ -267,14 +262,14 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/logo.svg"
+                src="/logo.png"
                 alt="Logo"
-                width={150}
+                width={220}
                 height={40}
               />
               <Image
                 className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
+                src="/logo.png"
                 alt="Logo"
                 width={150}
                 height={40}
@@ -282,7 +277,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src="/logo.png"
               alt="Logo"
               width={32}
               height={32}

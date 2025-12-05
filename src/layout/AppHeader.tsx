@@ -46,14 +46,14 @@ const AppHeader = () => {
   }, []);
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
+    <header className="sticky top-0 flex w-full bg-[#465fff] border-gray-200 z-0 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6">
 
         {/* LEFT AREA: Sidebar Toggle + Placeholder Branding */}
         <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 lg:border-b-0 lg:px-0 lg:py-4">
           {/* Sidebar Toggle Button */}
           <button
-            className="items-center justify-center w-10 h-10 text-gray-500 border-gray-200 rounded-lg dark:border-gray-800 lg:flex dark:text-gray-400 lg:h-11 lg:w-11 lg:border"
+            className="items-center justify-center w-10 h-10 text-white border-gray-200 rounded-lg dark:border-gray-800 lg:flex dark:text-gray-400 lg:h-11 lg:w-11 lg:border"
             onClick={handleToggleSidebar}
             aria-label="Toggle Sidebar"
           >
@@ -62,7 +62,7 @@ const AppHeader = () => {
 
           {/* Placeholder Logo */}
           <Link href="/" className="lg:hidden">
-            <div className="font-semibold text-lg text-gray-700 dark:text-white">
+            <div className="font-semibold text-lg text-white dark:text-white">
               My Dashboard
             </div>
           </Link>
@@ -92,7 +92,7 @@ const AppHeader = () => {
 
           {/* USER BADGE */}
           <div className="flex items-center gap-3">
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">
+            <span className="text-white dark:text-gray-300 text-sm font-medium">
               👋 Welcome
             </span>
             <UserDropdown />
