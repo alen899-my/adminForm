@@ -14,6 +14,7 @@ export default function LeadDetailsModal({ open, onClose, data, mode }) {
   // Preview helper for local file blob
   const previewLocalFile = (file) => (file ? URL.createObjectURL(file) : null);
 
+
   // Sync values on open
 useEffect(() => {
   if (open) {
@@ -74,7 +75,9 @@ useEffect(() => {
       });
 
       // 🔥 Update UI
-      updateRowStatus(index, newStatus);
+     updateRowStatus(index, newStatus);  
+onClose(false, { ...lead, status: newStatus }); // sync with modal + table
+
     };
 
     return (
@@ -127,7 +130,8 @@ useEffect(() => {
       setTimeout(() => {
         setToast({ show: false, message: "", type: "" });
         setEditMode(false);
-        onClose(true);
+        onClose(false, { ...form }); // send updated row back
+
       }, 2000);
     } else {
       setToast({ show: true, message: result.message || "Update failed", type: "error" });

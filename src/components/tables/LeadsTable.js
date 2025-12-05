@@ -24,7 +24,13 @@ export default function LeadsTable() {
 
   // Page jump input
   const [pageInput, setPageInput] = useState("");
-
+  const updateRowData = (updatedLead) => {
+    setLeads(prev =>
+      prev.map(lead =>
+        lead._id === updatedLead._id ? updatedLead : lead
+      )
+    );
+  };
   const fetchLeads = async () => {
     setLoading(true);
 
@@ -321,15 +327,14 @@ const openModal = (lead, mode) => {
 
       
       <LeadDetailsModal
-        open={modalOpen}
-        onClose={(shouldRefresh) => {
-          setModalOpen(false);
-          if (shouldRefresh) fetchLeads();
-        }}
-        data={selectedLead}
-        mode={modalMode}
-      />
-
+  open={modalOpen}
+  onClose={(shouldRefresh, updatedLead) => {
+    setModalOpen(false);
+    if (updatedLead) updateRowData(updatedLead); // ⬅️ update only that row
+  }}
+  data={selectedLead}
+  mode={modalMode}
+/>
     </div>
   );
 }
