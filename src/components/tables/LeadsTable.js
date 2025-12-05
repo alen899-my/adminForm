@@ -24,8 +24,32 @@ export default function LeadsTable() {
 
   // Page jump input
   const [pageInput, setPageInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState(""); // "" = all
+ const [search, setSearch] = useState("");
+const [statusFilter, setStatusFilter] = useState("all");
+
+  const scrollRef = React.useRef(null);
+const [isDown, setIsDown] = useState(false);
+const [startX, setStartX] = useState(0);
+const [scrollLeft, setScrollLeft] = useState(0);
+
+const startDrag = (e) => {
+  setIsDown(true);
+  setStartX(e.pageX - scrollRef.current.offsetLeft);
+  setScrollLeft(scrollRef.current.scrollLeft);
+};
+
+const stopDrag = () => {
+  setIsDown(false);
+};
+
+const onDrag = (e) => {
+  if (!isDown) return;
+  e.preventDefault();
+  const x = e.pageX - scrollRef.current.offsetLeft;
+  const walk = (x - startX) * 2; // speed multiplier
+  scrollRef.current.scrollLeft = scrollLeft - walk;
+};
+
   const updateRowData = (updatedLead) => {
     setLeads(prev =>
       prev.map(lead =>
@@ -35,24 +59,38 @@ export default function LeadsTable() {
   };
 
   //search
- const fetchLeads = async () => {
+const fetchLeads = async (manual = false) => {
   setLoading(true);
 
-  try {
-    const res = await fetch(`/api/all-leads?page=${page}&limit=${limit}&search=${search}`);
-    const data = await res.json();
+  const query = new URLSearchParams({
+    page,
+    limit,
+    search,
+    status: statusFilter
+  }).toString();
 
-    if (data.success) {
+  const res = await fetch(`/api/all-leads?${query}`);
+  const data = await res.json();
+
+  if (data.success) {
+    if (manual) {
+      setLeads([]); // smooth reload on button click
       setTimeout(() => {
         setLeads(data.leads);
         setTotalPages(data.pagination.totalPages);
-      }, 120);
+      }, 100);
+    } else {
+      setLeads(data.leads);
+      setTotalPages(data.pagination.totalPages);
     }
-  } catch (err) {
-    console.log("❌ Fetch error:", err);
   }
 
-  setTimeout(() => setLoading(false), 120);
+  setTimeout(() => setLoading(false), 100);
+};
+
+const handleFilterSearch = () => {
+  setPage(1); 
+  fetchLeads(true); // fetch only when button clicked
 };
 
 // Call search immediately or only when pressing button
@@ -70,7 +108,6 @@ const handleSearch = () => {
   };
 
 const StatusToggle = ({ lead, index }) => {
-
   const toggleStatus = async () => {
     const newStatus = lead.status === "pending" ? "completed" : "pending";
 
@@ -83,22 +120,35 @@ const StatusToggle = ({ lead, index }) => {
     updateRowStatus(index, newStatus);
   };
 
+  const isCompleted = lead.status === "completed";
+
   return (
     <span
       onClick={toggleStatus}
       className={`
-        inline-flex items-center justify-center px-3 py-1 text-[11px] font-medium cursor-pointer rounded-full border transition
-        ${
-          lead.status === "completed"
-            ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200 hover:border-green-400 dark:bg-green-700 dark:text-white dark:border-green-600 dark:hover:bg-green-600"
-            : "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200 hover:border-yellow-400 dark:bg-yellow-600 dark:text-white dark:border-yellow-500 dark:hover:bg-yellow-500"
+        inline-flex items-center justify-center px-3 py-1 text-[11px] 
+        font-medium cursor-pointer rounded-full border transition-all duration-200
+
+        ${isCompleted 
+          ? // COMPLETED STYLE
+            `bg-[#ECFDF5] text-[#059669] border-[#A7F3D0] 
+             hover:bg-[#10B981] hover:text-white hover:border-transparent
+             dark:bg-[#065F46] dark:text-[#D1FAE5] dark:border-[#047857] 
+             dark:hover:bg-[#10B981] dark:hover:text-white`
+          
+          : // PENDING STYLE
+            `bg-[#FFFBEB] text-[#B45309] border-[#FDE68A] 
+             hover:bg-[#F59E0B] hover:text-white hover:border-transparent
+             dark:bg-[#7C4700] dark:text-[#FFE7B3] dark:border-[#B45309] 
+             dark:hover:bg-[#F59E0B] dark:hover:text-white`
         }
       `}
     >
-      {lead.status === "completed" ? "Completed" : "Pending"}
+      {isCompleted ? "Completed" : "Pending"}
     </span>
   );
 };
+
 
 
 
@@ -123,48 +173,98 @@ const openModal = (lead, mode) => {
       setPageInput("");
     }
   };
+  useEffect(() => {
+  fetchLeads();
+}, [page]);
 
   const nextPage = () => page < totalPages && setPage(page + 1);
   const prevPage = () => page > 1 && setPage(page - 1);
 
   return (
-    <div className="space-y-2 ">
-  <div className="flex items-center gap-2 w-full max-w-md">
+    <div className="space-y-2 -z-100">
+ {/* 🔍 SEARCH + STATUS FILTER */}
+<div className="flex flex-wrap gap-3 mb-5 items-center">
+
+  {/* Search Input */}
   <input
     type="text"
     placeholder="Search by name, email, phone..."
     value={search}
     onChange={(e) => setSearch(e.target.value)}
-    className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-sm dark:bg-gray-900 dark:text-gray-200"
+    className="border border-gray-300 dark:border-gray-700 px-3 py-2 rounded-lg text-sm w-60 dark:bg-gray-900 dark:text-white"
   />
 
-  <button
-    onClick={handleSearch}
-    className="px-4 py-2 bg-[#465fff] hover:bg-[#374bd1] text-white rounded-lg text-sm"
+  {/* Status Filter */}
+  <select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+    className="border border-gray-300 dark:border-gray-700 px-3 py-2 rounded-lg text-sm dark:bg-gray-900 dark:text-white"
   >
-     Search
+    <option value="all">All</option>
+    <option value="pending">Pending</option>
+    <option value="completed">Completed</option>
+  </select>
+
+  {/* Search Button */}
+  <button
+    onClick={handleFilterSearch}
+    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
+  >
+    Search
   </button>
 </div>
+
+
       {/* ---------- SCROLLABLE TABLE CONTAINER ---------- */}
-      <div className="rounded-xl border border-gray-300 bg-white shadow-xl dark:bg-gray-900 dark:border-gray-700 overflow-hidden">
+      <div className="rounded-xl border bg-white shadow-xl dark:bg-gray-900 dark:border-gray-700 overflow-hidden">
 
        
  
 
-        <div className="max-h-[600px] overflow-y-auto custom-scrollbar"> {/* ✅ Scroll bar only table */}
-          <Table className="w-full border-collapse">
-            <TableHeader>
-              <TableRow className="bg-[#465fff] dark:bg-[#374bd1] hover:bg-[#465fff] dark:hover:bg-[#374bd1] border-b border-gray-300 dark:border-gray-700">
-                {["#","Location", "Capacity", "Admin Name", "Email", "Phone","Status", "Actions"].map((heading) => (
-                  <TableCell
-                    key={heading}
-                    className="px-5 py-4 font-bold text-white text-xs uppercase tracking-wider whitespace-nowrap border-r border-blue-400/30 last:border-r-0"
-                  >
-                    {heading}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHeader>
+        <div
+  className="max-h-[600px] overflow-y-auto overflow-x-auto cursor-grab active:cursor-grabbing select-none"
+  ref={scrollRef}
+  onMouseDown={startDrag}
+  onMouseLeave={stopDrag}
+  onMouseUp={stopDrag}
+  onMouseMove={onDrag}
+>
+          <Table className="w-full  -z-99">
+          <TableHeader>
+  <TableRow
+    className="
+      sticky top-0 z-20
+      bg-[#465fff] 
+      text-white
+
+      dark:bg-gradient-to-r dark:from-[#252745] dark:to-[#252745] 
+     
+    "
+  >
+    {[
+      "#",
+      "Location",
+      "Capacity",
+      "Admin Name",
+      "Email",
+      "Phone",
+      "Status",
+      "Actions",
+    ].map((heading) => (
+      <TableCell
+        key={heading}
+        className="
+          px-5 py-4 font-semibold text-white text-xs uppercase tracking-wider whitespace-nowrap 
+          
+        "
+      >
+        {heading}
+      </TableCell>
+    ))}
+  </TableRow>
+</TableHeader>
+
+
 
             <TableBody>
               {(loading ? [...Array(limit)] : leads).map((lead, index) => (
@@ -209,39 +309,57 @@ const openModal = (lead, mode) => {
                   
                   <TableCell className="px-5 py-3 border-r border-gray-300 dark:border-gray-700 text-center">
                     <StatusToggle lead={lead} index={index} />
+                   
                   </TableCell>
 
-                  <TableCell className="px-5 py-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
+               <TableCell className="px-5 py-3 text-center">
+  <div className="flex items-center justify-center gap-2">
 
-                      {/* VIEW BUTTON */}
-                      <div className="relative group">
-                        <button
-                          onClick={() => openModal(lead, "view")}
-                          className="flex items-center justify-center w-8 h-8 rounded-lg border border-[#27AE60]/30 bg-[#27AE60]/10 text-[#27AE60] hover:bg-[#27AE60] hover:text-white transition-all dark:border-[#27AE60]/50 dark:bg-[#27AE60]/20 dark:hover:bg-[#27AE60]"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded bg-gray-900 text-white dark:bg-white dark:text-gray-900 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-md">
-                          View
-                        </span>
-                      </div>
+    {/* VIEW BUTTON */}
+    <div className="relative group">
+      <button
+        onClick={() => openModal(lead, "view")}
+        className="
+          flex items-center justify-center w-8 h-8 rounded-lg
+          border border-[#27AE60]/30 bg-[#27AE60]/10 text-[#27AE60]
+          hover:bg-[#27AE60] hover:text-white transition-all
 
-                      {/* EDIT BUTTON */}
-                      <div className="relative group">
-                        <button
-                          onClick={() => openModal(lead, "edit")}
-                          className="flex items-center justify-center w-8 h-8 rounded-lg border border-[#E67E22]/30 bg-[#E67E22]/10 text-[#E67E22] hover:bg-[#E67E22] hover:text-white transition-all dark:border-[#E67E22]/50 dark:bg-[#E67E22]/20 dark:hover:bg-[#E67E22]"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded bg-gray-900 text-white dark:bg-white dark:text-gray-900 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-md">
-                          Edit
-                        </span>
-                      </div>
+          dark:border-[#27AE60]/40 dark:bg-[#1b2e1d] dark:text-[#6BFFA0]
+          dark:hover:bg-[#27AE60] dark:hover:text-white
+        "
+      >
+        <Eye size={16} />
+      </button>
 
-                    </div>
-                  </TableCell>
+      <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded bg-gray-900 text-white dark:bg-white dark:text-gray-900 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-md">
+        View
+      </span>
+    </div>
+
+    {/* EDIT BUTTON */}
+    <div className="relative group">
+      <button
+        onClick={() => openModal(lead, "edit")}
+        className="
+          flex items-center justify-center w-8 h-8 rounded-lg
+          border border-[#E67E22]/30 bg-[#E67E22]/10 text-[#E67E22]
+          hover:bg-[#E67E22] hover:text-white transition-all
+
+          dark:border-[#E67E22]/40 dark:bg-[#2d241b] dark:text-[#FFC68A]
+          dark:hover:bg-[#E67E22] dark:hover:text-white
+        "
+      >
+        <Pencil size={16} />
+      </button>
+
+      <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded bg-gray-900 text-white dark:bg-white dark:text-gray-900 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-md">
+        Edit
+      </span>
+    </div>
+
+  </div>
+</TableCell>
+
                   </>
                   )}
                 </TableRow>

@@ -46,7 +46,7 @@ const AppHeader = () => {
   }, []);
 
   return (
-    <header className="sticky top-0 flex w-full bg-[#465fff] border-gray-200 z-0 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
+    <header className="sticky top-0 flex w-full bg-[#465fff] border-gray-200 z-999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6">
 
         {/* LEFT AREA: Sidebar Toggle + Placeholder Branding */}

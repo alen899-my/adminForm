@@ -840,3 +840,28 @@ input[type="file"]::-webkit-file-upload-button {
 input[type="file"] {
   display: none;
 }
+/* ===== Custom Scrollbar Styling ===== */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #465fff #e5e7eb; /* thumb , track */
+}
+
+/* For Chrome, Safari & Edge */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px; /* Enables bottom scrollbar styling */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #e5e7eb; /* Gray background */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #465fff; /* Blue thumb */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #1e40ff; /* Darker on hover */
+}

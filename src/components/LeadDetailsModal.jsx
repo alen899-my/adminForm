@@ -146,7 +146,7 @@ onClose(false, { ...lead, status: newStatus }); // sync with modal + table
   return (
     <>
       {/* ----------- MAIN MODAL ----------- */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[99] p-4 transition-all duration-300">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-99999 p-4 transition-all duration-300">
       
         <div
           ref={modalRef}
