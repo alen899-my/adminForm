@@ -16,7 +16,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
 
   // Initial State
   const [formData, setFormData] = useState({
-    status: "in-progress", // <--- ADDED STATUS STATE
+    status: "in-progress",
     locationName: "", capacity: "", waitTime: "", mapsUrl: "",
     latitude: "", longitude: "", timing: "", address: "",
     lobbies: "", keyRooms: "", distance: "",
@@ -28,15 +28,14 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
     documentSubmitMethod: ""
   });
 
-  // Existing file names (for display purposes)
   const [existingFiles, setExistingFiles] = useState({});
 
-  // POPULATE DATA WHEN MODAL OPENS
+  // POPULATE DATA
   useEffect(() => {
     if (leadData) {
       setFormData((prev) => ({
         ...prev,
-        status: leadData.status || "in-progress", // <--- POPULATE STATUS
+        status: leadData.status || "in-progress",
         locationName: leadData.locationName || "",
         capacity: leadData.capacity || "",
         waitTime: leadData.waitTime || "",
@@ -79,7 +78,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
     setCurrentStep(1); 
   }, [leadData]);
 
-  // --- VALIDATION LOGIC ---
+  // --- VALIDATION ---
   const validateStep1 = () => {
     let newErrors = {};
     if (!formData.locationName?.trim()) newErrors.locationName = "Required";
@@ -117,7 +116,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
     }
   };
 
-  // --- SUBMIT UPDATE ---
+  // --- SUBMIT ---
   const handleUpdateSubmit = async () => {
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -158,8 +157,8 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
   const FileUploadBlock = ({ label, name, accept, file, currentFileName }) => {
     const fileRef = useRef(null);
     return (
-      <div className="border rounded-lg p-2 bg-gray-50 flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-900">{label}</label>
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-800 flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-900 dark:text-gray-200">{label}</label>
         <input
           ref={fileRef}
           type="file"
@@ -170,19 +169,19 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
         />
         <div className="flex flex-col gap-1">
             {!file && currentFileName && (
-                <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded mb-1 flex items-center gap-1">
+                <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded mb-1 flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" /> Current: {currentFileName}
                 </div>
             )}
             <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-between border border-gray-300 bg-white rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
+            className="flex items-center justify-between border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition"
             >
             <span className="truncate">
                 {file ? `New: ${file.name}` : "Change File"}
             </span>
-            {file ? <Upload className="w-4 h-4 text-blue-600" /> : <Upload className="w-4 h-4 text-gray-400" />}
+            {file ? <Upload className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <Upload className="w-4 h-4 text-gray-400" />}
             </button>
         </div>
       </div>
@@ -200,7 +199,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
         <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 px-5 py-3 flex justify-between items-center shrink-0">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <UserCog className="w-5 h-5 text-blue-600" /> 
+              <UserCog className="w-5 h-5 text-blue-600 dark:text-blue-500" /> 
               Edit Lead Details
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">Update client information</p>
@@ -215,7 +214,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
           
           {/* 1. TABS NAVIGATION */}
           <div className="w-full flex items-center justify-center py-2">
-            <div className="flex gap-1 overflow-x-auto no-scrollbar scroll-smooth rounded-lg border border-gray-300 bg-white shadow-sm px-2 py-1"
+            <div className="flex gap-1 overflow-x-auto no-scrollbar scroll-smooth rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm px-2 py-1"
                 style={{ WebkitOverflowScrolling: "touch" }}>
                 {[
                 { label: "Location", icon: <MapPin size={16} /> },
@@ -236,7 +235,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                         transition-all duration-300 ease-out select-none
                         ${isActive
                             ? "bg-blue-600 text-white shadow-md scale-[1.05]"
-                            : "text-gray-600 bg-gray-100 hover:bg-gray-200"
+                            : "text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
                         }
                     `}
                     >
@@ -248,11 +247,11 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
           </div>
 
           {/* 2. PROGRESS BAR */}
-          <div className="border-b pb-4">
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Step {currentStep} of 6
                 </p>
-                <div className="w-full bg-gray-200 h-1.5 mt-2 rounded-full overflow-hidden">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 mt-2 rounded-full overflow-hidden">
                     <div 
                         className="bg-blue-600 h-full rounded-full transition-all duration-300"
                         style={{ width: `${(currentStep / 6) * 100}%` }}
@@ -262,14 +261,14 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
 
           {/* WIZARD ERROR MESSAGE */}
           {wizardError && (
-            <div className="text-red-600 text-sm bg-red-100 border border-red-300 px-3 py-2 rounded-lg text-center">
+            <div className="text-red-600 dark:text-red-400 text-sm bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 px-3 py-2 rounded-lg text-center">
               ⚠️ {wizardError}
             </div>
           )}
 
           {/* SUCCESS MESSAGE */}
           {isSubmitted ? (
-            <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 p-8 rounded-lg text-center flex flex-col items-center gap-3">
+            <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 p-8 rounded-lg text-center flex flex-col items-center gap-3">
               <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
               <h3 className="text-xl font-bold">Updated Successfully!</h3>
               
@@ -283,65 +282,65 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
               {currentStep === 1 && (
                 <div className="space-y-4">
                   <div>
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Location Information</h2>
-                    <p className="text-xs sm:text-sm text-gray-500">Basic details about the property where valet parking will be operated.</p>
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Location Information</h2>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Basic details about the property where valet parking will be operated.</p>
                   </div>
 
-                  {/* --- NEW STATUS DROPDOWN BLOCK --- */}
-                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 mb-2">
+                  {/* --- STATUS DROPDOWN --- */}
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 mb-2">
                     <div className="flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-blue-600" />
+                        <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         <div>
-                            <p className="text-sm font-bold text-blue-900">Project Status</p>
-                            <p className="text-xs text-blue-600">Set the current progress of this lead</p>
+                            <p className="text-sm font-bold text-blue-900 dark:text-blue-200"> Status</p>
+                            <p className="text-xs text-blue-600 dark:text-blue-300">Set the current progress of this lead</p>
                         </div>
                     </div>
                     <select
                         name="status"
                         value={formData.status}
                         onChange={handleChange}
-                        className="w-full sm:w-48 bg-white border border-blue-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none"
+                        className="w-full sm:w-48 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none"
                     >
                         <option value="in-progress">In Progress</option>
                         <option value="completed">Completed</option>
                     </select>
                   </div>
-                  {/* ---------------------------------- */}
+                  {/* ----------------------- */}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-1">
-                      <label className="text-sm font-medium text-gray-900">Location Name <span className="text-red-600 font-bold">*</span></label>
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Location Name <span className="text-red-600 font-bold">*</span></label>
                       <input type="text" name="locationName" value={formData.locationName} onChange={handleChange}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.locationName ? "border-red-500" : "border-gray-300"}`} />
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.locationName ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Capacity <span className="text-red-600 font-bold">*</span></label>
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Capacity <span className="text-red-600 font-bold">*</span></label>
                       <input type="number" name="capacity" value={formData.capacity} onChange={handleChange}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.capacity ? "border-red-500" : "border-gray-300"}`} />
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.capacity ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Avg Wait Time</label>
-                      <input type="text" name="waitTime" value={formData.waitTime} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Avg Wait Time</label>
+                      <input type="text" name="waitTime" value={formData.waitTime} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Maps URL</label>
-                      <input type="url" name="mapsUrl" value={formData.mapsUrl} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Maps URL</label>
+                      <input type="url" name="mapsUrl" value={formData.mapsUrl} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Latitude</label>
-                      <input type="text" name="latitude" value={formData.latitude} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Latitude</label>
+                      <input type="text" name="latitude" value={formData.latitude} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Longitude</label>
-                      <input type="text" name="longitude" value={formData.longitude} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Longitude</label>
+                      <input type="text" name="longitude" value={formData.longitude} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Operation Timing</label>
-                      <input type="text" name="timing" value={formData.timing} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Operation Timing</label>
+                      <input type="text" name="timing" value={formData.timing} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div className="md:col-span-1">
-                      <label className="text-sm font-medium text-gray-900">Address / TRN</label>
-                      <textarea rows={2} name="address" value={formData.address} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Address / TRN</label>
+                      <textarea rows={2} name="address" value={formData.address} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none" />
                     </div>
                   </div>
                 </div>
@@ -351,31 +350,31 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
               {currentStep === 2 && (
                 <div className="space-y-3">
                    <div>
-                        <h2 className="text-lg sm:text-xl font-semibold text-gray-900">On-Site User Setup</h2>
-                        <p className="text-xs sm:text-sm text-gray-500">Internal users + operational setup details.</p>
+                        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">On-Site User Setup</h2>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Internal users + operational setup details.</p>
                     </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Lobbies</label>
-                      <input type="number" name="lobbies" value={formData.lobbies} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Lobbies</label>
+                      <input type="number" name="lobbies" value={formData.lobbies} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Key Rooms</label>
-                      <input type="number" name="keyRooms" value={formData.keyRooms} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Key Rooms</label>
+                      <input type="number" name="keyRooms" value={formData.keyRooms} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Distance</label>
-                      <input type="text" name="distance" value={formData.distance} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Distance</label>
+                      <input type="text" name="distance" value={formData.distance} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     {/* Radios */}
                     {['supervisorUser', 'validationUser', 'reportUser'].map(field => (
-                      <div key={field} className="border border-gray-300 rounded-lg p-3 bg-gray-50">
-                        <p className="text-sm font-medium text-gray-900 mb-1 capitalize">{field.replace('User', '')} Access?</p>
+                      <div key={field} className="border border-gray-300 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-200 mb-1 capitalize">{field.replace('User', '')} Access?</p>
                         <div className="flex items-center gap-4">
-                          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
                             <input type="radio" name={field} value="yes" checked={formData[field] === "yes"} onChange={handleChange} className="text-blue-600 focus:ring-blue-500" /> Yes
                           </label>
-                          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
                             <input type="radio" name={field} value="no" checked={formData[field] === "no"} onChange={handleChange} className="text-blue-600 focus:ring-blue-500" /> No
                           </label>
                         </div>
@@ -389,29 +388,29 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
               {currentStep === 3 && (
                 <div className="space-y-3">
                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">Valet Ticket & Pricing</h2>
-                        <p className="text-xs text-gray-500">Tell us how tickets are generated and how you charge guests.</p>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">Valet Ticket & Pricing</h2>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Tell us how tickets are generated and how you charge guests.</p>
                     </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-300">
-                      <label className="block text-sm font-medium text-gray-900 mb-2">Ticket Type</label>
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700">
+                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">Ticket Type</label>
                       <div className="flex flex-col gap-2">
-                        <label className="flex gap-2 text-sm text-gray-700"><input type="radio" name="ticketType" value="pre-printed" checked={formData.ticketType === "pre-printed"} onChange={handleChange} className="text-blue-600" /> Pre-printed</label>
-                        <label className="flex gap-2 text-sm text-gray-700"><input type="radio" name="ticketType" value="system-generated" checked={formData.ticketType === "system-generated"} onChange={handleChange} className="text-blue-600" /> System Generated</label>
+                        <label className="flex gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="radio" name="ticketType" value="pre-printed" checked={formData.ticketType === "pre-printed"} onChange={handleChange} className="text-blue-600" /> Pre-printed</label>
+                        <label className="flex gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="radio" name="ticketType" value="system-generated" checked={formData.ticketType === "system-generated"} onChange={handleChange} className="text-blue-600" /> System Generated</label>
                       </div>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-300">
-                      <label className="block text-sm font-medium text-gray-900 mb-2">Fee Type</label>
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700">
+                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">Fee Type</label>
                       <div className="flex gap-4 flex-wrap">
-                        <label className="flex gap-2 text-sm text-gray-700"><input type="radio" name="feeType" value="fixed" checked={formData.feeType === "fixed"} onChange={handleChange} className="text-blue-600" /> Fixed</label>
-                        <label className="flex gap-2 text-sm text-gray-700"><input type="radio" name="feeType" value="hourly" checked={formData.feeType === "hourly"} onChange={handleChange} className="text-blue-600" /> Hourly</label>
+                        <label className="flex gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="radio" name="feeType" value="fixed" checked={formData.feeType === "fixed"} onChange={handleChange} className="text-blue-600" /> Fixed</label>
+                        <label className="flex gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="radio" name="feeType" value="hourly" checked={formData.feeType === "hourly"} onChange={handleChange} className="text-blue-600" /> Hourly</label>
                       </div>
                     </div>
                     <div className="md:col-span-2">
-                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
                         Ticket Prices (AED) <Banknote className="w-4 h-4 text-gray-400" />
                         </label>
-                      <textarea rows={2} name="ticketPricing" value={formData.ticketPricing} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <textarea rows={2} name="ticketPricing" value={formData.ticketPricing} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                   </div>
                 </div>
@@ -421,17 +420,17 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
               {currentStep === 4 && (
                 <div className="space-y-3">
                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2"><UserCog className="w-5 h-5 text-blue-600" /> Drivers / CVA Team</h2>
-                        <p className="text-sm text-gray-500">Details of drivers who will be mapped to this location.</p>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2"><UserCog className="w-5 h-5 text-blue-600 dark:text-blue-500" /> Drivers / CVA Team</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Details of drivers who will be mapped to this location.</p>
                     </div>
                   <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Driver Count</label>
-                      <input type="number" name="driverCount" value={formData.driverCount} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Driver Count</label>
+                      <input type="number" name="driverCount" value={formData.driverCount} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Driver List</label>
-                      <textarea rows={5} name="driverList" value={formData.driverList} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm" />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Driver List</label>
+                      <textarea rows={5} name="driverList" value={formData.driverList} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm" />
                     </div>
                   </div>
                 </div>
@@ -441,21 +440,21 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
               {currentStep === 5 && (
                 <div className="space-y-3">
                     <div>
-                        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2"><ShieldUser className="w-5 h-5 text-blue-600" /> Super Admin Contact</h2>
-                        <p className="text-sm text-gray-500">Main person responsible for valet operations & application access.</p>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2"><ShieldUser className="w-5 h-5 text-blue-600 dark:text-blue-500" /> Super Admin Contact</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Main person responsible for valet operations & application access.</p>
                     </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <label className="text-sm font-medium text-gray-900">Admin Name <span className="text-red-600 font-bold">*</span></label>
-                      <input type="text" name="adminName" value={formData.adminName} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.adminName ? "border-red-500" : "border-gray-300"}`} />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Admin Name <span className="text-red-600 font-bold">*</span></label>
+                      <input type="text" name="adminName" value={formData.adminName} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminName ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Email <span className="text-red-600 font-bold">*</span></label>
-                      <input type="email" name="adminEmail" value={formData.adminEmail} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.adminEmail ? "border-red-500" : "border-gray-300"}`} />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Email <span className="text-red-600 font-bold">*</span></label>
+                      <input type="email" name="adminEmail" value={formData.adminEmail} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminEmail ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Phone <span className="text-red-600 font-bold">*</span></label>
-                      <input type="tel" name="adminPhone" value={formData.adminPhone} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.adminPhone ? "border-red-500" : "border-gray-300"}`} />
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Phone <span className="text-red-600 font-bold">*</span></label>
+                      <input type="tel" name="adminPhone" value={formData.adminPhone} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminPhone ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
                     </div>
                   </div>
                 </div>
@@ -465,8 +464,8 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
               {currentStep === 6 && (
                 <div className="space-y-3">
                     <div>
-                        <h2 className="text-xl font-semibold text-gray-900">📎 Required Documents</h2>
-                        <p className="text-xs text-gray-500">Upload now or submit later via email/WhatsApp.</p>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">📎 Required Documents</h2>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Upload now or submit later via email/WhatsApp.</p>
                     </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FileUploadBlock label="Company Logo" name="logoCompany" accept="image/*" file={formData.logoCompany} currentFileName={existingFiles.companyLogo} />
@@ -475,8 +474,8 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                     <FileUploadBlock label="Trade License" name="tradeLicense" accept="application/pdf" file={formData.tradeLicense} currentFileName={existingFiles.tradeLicense} />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-900">How will you send documents?</label>
-                    <textarea rows={2} name="documentSubmitMethod" value={formData.documentSubmitMethod} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <label className="text-sm font-medium text-gray-900 dark:text-gray-200">How will you send documents?</label>
+                    <textarea rows={2} name="documentSubmitMethod" value={formData.documentSubmitMethod} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                 </div>
               )}
