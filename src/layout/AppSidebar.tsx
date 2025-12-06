@@ -269,19 +269,23 @@ const AppSidebar: React.FC = () => {
               />
               <Image
                 className="hidden dark:block"
-                src="/logo.png"
+                src="/logodark.png"
                 alt="Logo"
-                width={150}
+                width={220}
                 height={40}
               />
             </>
           ) : (
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
+            <div className="bg-transparent">
+  <Image
+    src="/logs.png"
+    alt="Logo"
+    width={50}
+    height={50}
+    className="select-none bg-transparent"
+  />
+</div>
+
           )}
         </Link>
       </div>

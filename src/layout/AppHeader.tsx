@@ -63,7 +63,7 @@ const AppHeader = () => {
           {/* Placeholder Logo */}
           <Link href="/" className="lg:hidden">
             <div className="font-semibold text-lg text-white dark:text-white">
-              My Dashboard
+              Varlet Parking
             </div>
           </Link>
 
