@@ -55,7 +55,7 @@ export async function POST(req) {
       ...leadData,
       attachments,
     });
-    const editUrl = `/leads/edit/${newLead._id}`;
+    const editUrl = `/location-registration/[id]/${newLead._id}`;
 
     return NextResponse.json({ success: true, lead: newLead ,editUrl}, { status: 201 });
 

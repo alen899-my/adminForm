@@ -103,6 +103,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
     }
     if (isOpen) {
         setCurrentStep(1); 
+        setErrors({}); // Clear errors when opening
     }
   }, [leadData, isOpen]);
 
@@ -137,6 +138,20 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
+    
+    // Validate Real-time: Check if the field is required and empty
+    let updatedErrors = { ...errors };
+    const requiredFields = ["locationName", "capacity", "adminName", "adminEmail", "adminPhone"];
+    
+    if (requiredFields.includes(name)) {
+        if (!value || value.toString().trim() === "") {
+            updatedErrors[name] = "This field is required";
+        } else {
+            delete updatedErrors[name];
+        }
+        setErrors(updatedErrors);
+    }
+
     if (type === "file") {
       setFormData({ ...formData, [name]: files[0] });
     } else {
@@ -146,6 +161,12 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
 
   // --- SUBMIT ---
   const handleUpdateSubmit = async () => {
+    // Final check before submit
+    if(!validateStep1() || !validateStep5()) {
+        setWizardError("Please fill in all required fields.");
+        return;
+    }
+
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       if (value !== null && typeof value !== "object") {
@@ -366,11 +387,13 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                       <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Location Name <span className="text-red-600 font-bold">*</span></label>
                       <input type="text" name="locationName" value={formData.locationName} onChange={handleChange}
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.locationName ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
+                        {errors.locationName && <p className="text-red-500 text-xs mt-1">{errors.locationName}</p>}
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Capacity <span className="text-red-600 font-bold">*</span></label>
                       <input type="number" name="capacity" value={formData.capacity} onChange={handleChange}
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.capacity ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
+                        {errors.capacity && <p className="text-red-500 text-xs mt-1">{errors.capacity}</p>}
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Avg Wait Time</label>
@@ -633,6 +656,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                         onChange={handleChange} 
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminName ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} 
                         />
+                        {errors.adminName && <p className="text-red-500 text-xs mt-1">{errors.adminName}</p>}
                     </div>
 
                     {/* Email */}
@@ -647,6 +671,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                         onChange={handleChange} 
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminEmail ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} 
                         />
+                        {errors.adminEmail && <p className="text-red-500 text-xs mt-1">{errors.adminEmail}</p>}
                     </div>
 
                     {/* Phone */}
@@ -661,6 +686,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                         onChange={handleChange} 
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminPhone ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} 
                         />
+                        {errors.adminPhone && <p className="text-red-500 text-xs mt-1">{errors.adminPhone}</p>}
                     </div>
                     </div>
 
