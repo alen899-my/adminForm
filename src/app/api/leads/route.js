@@ -55,8 +55,9 @@ export async function POST(req) {
       ...leadData,
       attachments,
     });
+    const editUrl = `/leads/edit/${newLead._id}`;
 
-    return NextResponse.json({ success: true, lead: newLead }, { status: 201 });
+    return NextResponse.json({ success: true, lead: newLead ,editUrl}, { status: 201 });
 
   } catch (error) {
     console.error("❌ API ERROR:", error);

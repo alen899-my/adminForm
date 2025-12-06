@@ -43,14 +43,22 @@ export default function LeadDetailsModal({ open, onClose, data }) {
       {/* BACKDROP */}
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4 z-[9999]">
         
-        {/* MODAL */}
+        {/* MODAL WRAPPER */}
         <div
           ref={modalRef}
-          className="w-full max-w-6xl bg-white dark:bg-gray-900 border border-gray-400 dark:border-gray-600 rounded-xl max-h-[90vh] overflow-y-auto shadow-xl"
+          className={`
+            w-full max-w-6xl max-h-[90vh] shadow-xl
+            bg-white dark:bg-gray-900 border border-gray-400 dark:border-gray-600
+            
+            /* STRUCTURAL CHANGES FOR CURVED CORNERS */
+            flex flex-col
+            rounded-xl
+            overflow-hidden /* This clips the inner scrollbar to match the rounded corners */
+          `}
         >
           
-          {/* --- HEADER --- */}
-          <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 px-5 py-3 flex justify-between items-center">
+          {/* --- HEADER (Fixed at top, no scroll) --- */}
+          <div className="shrink-0 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 px-5 py-3 flex justify-between items-center">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Lead Details</h2>
               <p className="text-xs text-gray-500 dark:text-gray-400">Viewing client information</p>
@@ -64,8 +72,21 @@ export default function LeadDetailsModal({ open, onClose, data }) {
             </button>
           </div>
 
-          {/* --- CONTENT GRID --- */}
-          <div className="p-4 space-y-4">
+          {/* --- SCROLLABLE CONTENT AREA --- */}
+          <div className={`
+            flex-1 overflow-y-auto p-4 space-y-4
+            
+            /* SCROLLBAR STYLES APPLIED HERE */
+            [&::-webkit-scrollbar]:w-2
+            [&::-webkit-scrollbar-track]:bg-gray-100
+            dark:[&::-webkit-scrollbar-track]:bg-gray-950
+            [&::-webkit-scrollbar-thumb]:bg-gray-400
+            dark:[&::-webkit-scrollbar-thumb]:bg-gray-700
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            hover:[&::-webkit-scrollbar-thumb]:bg-gray-500
+            dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-600
+          `}>
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
               {/* STATUS BADGE */}
