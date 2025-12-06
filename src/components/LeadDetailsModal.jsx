@@ -1,13 +1,29 @@
 "use client";
 
 import Image from "next/image";
-import { X, Download, FileText } from "lucide-react";
+import Link from "next/link";
+import { 
+  X, Download, FileText, 
+  Copy, Check, ExternalLink // ✅ Added icons for Copy/Open
+} from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 export default function LeadDetailsModal({ open, onClose, data }) {
   const modalRef = useRef(null);
   const [previewSrc, setPreviewSrc] = useState(null);
+  
+  // ✅ State for Copy Feedback & Origin
+  const [copied, setCopied] = useState(false);
+  const [origin, setOrigin] = useState("");
 
+  // Get the base URL (window.location.origin) safely on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
+  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -18,6 +34,7 @@ export default function LeadDetailsModal({ open, onClose, data }) {
     return () => document.removeEventListener("mousedown", handler);
   }, [open, previewSrc]);
 
+  // Close on Escape key
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -31,12 +48,23 @@ export default function LeadDetailsModal({ open, onClose, data }) {
 
   if (!open || !data) return null;
 
+  // Process attachments
   const files = { companyLogo: null, clientLogo: null, vatCertificate: null, tradeLicense: null };
   data.attachments?.forEach((file) => {
     if (!files[file.fieldname]) files[file.fieldname] = file;
   });
 
   const extractId = (id) => String(id).replace(/ObjectId\("(.+)"\)/, "$1");
+
+  // ✅ Construct the Edit/Registration URL
+  const editLink = `${origin}/location-registration/${data._id}`;
+
+  // ✅ Handle Copy Function
+  const handleCopy = () => {
+    navigator.clipboard.writeText(editLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <>
@@ -49,21 +77,18 @@ export default function LeadDetailsModal({ open, onClose, data }) {
           className={`
             w-full max-w-6xl max-h-[90vh] shadow-xl
             bg-white dark:bg-gray-900 border border-gray-400 dark:border-gray-600
-            
-            /* STRUCTURAL CHANGES FOR CURVED CORNERS */
-            flex flex-col
-            rounded-xl
-            overflow-hidden /* This clips the inner scrollbar to match the rounded corners */
+            flex flex-col rounded-xl overflow-hidden
           `}
         >
           
-          {/* --- HEADER (Fixed at top, no scroll) --- */}
+          {/* --- HEADER --- */}
           <div className="shrink-0 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 px-5 py-3 flex justify-between items-center">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Lead Details</h2>
               <p className="text-xs text-gray-500 dark:text-gray-400">Viewing client information</p>
             </div>
 
+            {/* Close Button Only (Edit moved to grid) */}
             <button
               onClick={() => onClose(false)}
               className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
@@ -75,8 +100,6 @@ export default function LeadDetailsModal({ open, onClose, data }) {
           {/* --- SCROLLABLE CONTENT AREA --- */}
           <div className={`
             flex-1 overflow-y-auto p-4 space-y-4
-            
-            /* SCROLLBAR STYLES APPLIED HERE */
             [&::-webkit-scrollbar]:w-2
             [&::-webkit-scrollbar-track]:bg-gray-100
             dark:[&::-webkit-scrollbar-track]:bg-gray-950
@@ -88,6 +111,41 @@ export default function LeadDetailsModal({ open, onClose, data }) {
           `}>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              {/* ✅ NEW: REGISTRATION / EDIT LINK CARD */}
+              <div className="col-span-1 sm:col-span-2 lg:col-span-3 p-3 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/10">
+                <label className="text-xs text-blue-600 dark:text-blue-400 uppercase font-bold mb-2 flex items-center gap-2">
+                   Registration / Edit Link
+                </label>
+                
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {/* URL Display */}
+                  <div className="flex-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm text-gray-600 dark:text-gray-300 font-mono truncate select-all">
+                    {editLink}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={handleCopy}
+                      className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition text-sm font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+
+                    <Link
+                      href={`/location-registration/${data._id}`}
+                      target="_blank"
+                      className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition text-sm font-medium"
+                    >
+                      <ExternalLink size={16} />
+                      Open
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
 
               {/* STATUS BADGE */}
               <div className="p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
