@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   CarFront, MapPin, Users, Coins, ArrowRight,
-  Upload, UserCog, FileText, CheckCircle, X, ShieldUser, Banknote
+  Upload, UserCog, FileText, CheckCircle, X, ShieldUser, Banknote, Activity
 } from "lucide-react";
 
 export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
@@ -16,6 +16,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
 
   // Initial State
   const [formData, setFormData] = useState({
+    status: "in-progress", // <--- ADDED STATUS STATE
     locationName: "", capacity: "", waitTime: "", mapsUrl: "",
     latitude: "", longitude: "", timing: "", address: "",
     lobbies: "", keyRooms: "", distance: "",
@@ -35,6 +36,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
     if (leadData) {
       setFormData((prev) => ({
         ...prev,
+        status: leadData.status || "in-progress", // <--- POPULATE STATUS
         locationName: leadData.locationName || "",
         capacity: leadData.capacity || "",
         waitTime: leadData.waitTime || "",
@@ -211,7 +213,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
         {/* --- CONTENT BODY --- */}
         <div className="p-4 sm:p-6 space-y-4 flex-1">
           
-          {/* 1. TABS NAVIGATION (Scroll Wrapper style) */}
+          {/* 1. TABS NAVIGATION */}
           <div className="w-full flex items-center justify-center py-2">
             <div className="flex gap-1 overflow-x-auto no-scrollbar scroll-smooth rounded-lg border border-gray-300 bg-white shadow-sm px-2 py-1"
                 style={{ WebkitOverflowScrolling: "touch" }}>
@@ -225,7 +227,6 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                 ].map((tab, index) => {
                 const stepNumber = index + 1;
                 const isActive = currentStep === stepNumber;
-                const isCompleted = currentStep > stepNumber;
                 return (
                     <button
                     key={tab.label}
@@ -271,7 +272,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
             <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 p-8 rounded-lg text-center flex flex-col items-center gap-3">
               <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
               <h3 className="text-xl font-bold">Updated Successfully!</h3>
-              <p>Closing form...</p>
+              
             </div>
           ) : (
             
@@ -280,19 +281,41 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
               
               {/* STEP 1: LOCATION */}
               {currentStep === 1 && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
                     <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Location Information</h2>
                     <p className="text-xs sm:text-sm text-gray-500">Basic details about the property where valet parking will be operated.</p>
                   </div>
+
+                  {/* --- NEW STATUS DROPDOWN BLOCK --- */}
+                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 mb-2">
+                    <div className="flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-blue-600" />
+                        <div>
+                            <p className="text-sm font-bold text-blue-900">Project Status</p>
+                            <p className="text-xs text-blue-600">Set the current progress of this lead</p>
+                        </div>
+                    </div>
+                    <select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        className="w-full sm:w-48 bg-white border border-blue-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none"
+                    >
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                  {/* ---------------------------------- */}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-1">
-                      <label className="text-sm font-medium text-gray-900">Location Name *</label>
+                      <label className="text-sm font-medium text-gray-900">Location Name <span className="text-red-600 font-bold">*</span></label>
                       <input type="text" name="locationName" value={formData.locationName} onChange={handleChange}
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.locationName ? "border-red-500" : "border-gray-300"}`} />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Capacity *</label>
+                      <label className="text-sm font-medium text-gray-900">Capacity <span className="text-red-600 font-bold">*</span></label>
                       <input type="number" name="capacity" value={formData.capacity} onChange={handleChange}
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.capacity ? "border-red-500" : "border-gray-300"}`} />
                     </div>
@@ -423,15 +446,15 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                     </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <label className="text-sm font-medium text-gray-900">Admin Name *</label>
+                      <label className="text-sm font-medium text-gray-900">Admin Name <span className="text-red-600 font-bold">*</span></label>
                       <input type="text" name="adminName" value={formData.adminName} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.adminName ? "border-red-500" : "border-gray-300"}`} />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Email *</label>
+                      <label className="text-sm font-medium text-gray-900">Email <span className="text-red-600 font-bold">*</span></label>
                       <input type="email" name="adminEmail" value={formData.adminEmail} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.adminEmail ? "border-red-500" : "border-gray-300"}`} />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900">Phone *</label>
+                      <label className="text-sm font-medium text-gray-900">Phone <span className="text-red-600 font-bold">*</span></label>
                       <input type="tel" name="adminPhone" value={formData.adminPhone} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.adminPhone ? "border-red-500" : "border-gray-300"}`} />
                     </div>
                   </div>
@@ -452,7 +475,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                     <FileUploadBlock label="Trade License" name="tradeLicense" accept="application/pdf" file={formData.tradeLicense} currentFileName={existingFiles.tradeLicense} />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-900">Submission Method</label>
+                    <label className="text-sm font-medium text-gray-900">How will you send documents?</label>
                     <textarea rows={2} name="documentSubmitMethod" value={formData.documentSubmitMethod} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                 </div>
