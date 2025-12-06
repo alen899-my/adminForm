@@ -10,13 +10,14 @@ import {
 } from "../ui/table";
 import { Eye, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import LeadDetailsModal from "../LeadDetailsModal";
-
+import EditLeadModal from "../EditLeadModal";
 export default function LeadsTable() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [modalMode, setModalMode] = useState("view");
+  const [isEditOpen, setIsEditOpen] = useState(false);
   // Pagination
   const [page, setPage] = useState(1);
   const limit = 50; // ✅ SHOW 50 ROWS
@@ -41,7 +42,12 @@ const startDrag = (e) => {
 const stopDrag = () => {
   setIsDown(false);
 };
+const handleEditClick = (lead) => {
+    setSelectedLead(lead);
+    setIsEditOpen(true);
+  };
 
+  
 const onDrag = (e) => {
   if (!isDown) return;
   e.preventDefault();
@@ -106,41 +112,21 @@ const handleSearch = () => {
       return updated;
     });
   };
-
-const StatusToggle = ({ lead, index }) => {
-  const toggleStatus = async () => {
-    const newStatus = lead.status === "pending" ? "completed" : "pending";
-
-    await fetch(`/api/update-status/${lead._id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-
-    updateRowStatus(index, newStatus);
-  };
-
-  const isCompleted = lead.status === "completed";
+const StatusBadge = ({ status }) => {
+  const isCompleted = status === "completed";
 
   return (
     <span
-      onClick={toggleStatus}
       className={`
-        inline-flex items-center justify-center px-3 py-1 text-[11px] 
-        font-medium cursor-pointer rounded-full border transition-all duration-200
+        inline-flex items-center justify-center px-3 py-1 text-[11px]
+        font-medium rounded-md select-none
 
-        ${isCompleted 
-          ? // COMPLETED STYLE
-            `bg-[#ECFDF5] text-[#059669] border-[#A7F3D0] 
-             hover:bg-[#10B981] hover:text-white hover:border-transparent
-             dark:bg-[#065F46] dark:text-[#D1FAE5] dark:border-[#047857] 
-             dark:hover:bg-[#10B981] dark:hover:text-white`
-          
-          : // PENDING STYLE
-            `bg-[#FFFBEB] text-[#B45309] border-[#FDE68A] 
-             hover:bg-[#F59E0B] hover:text-white hover:border-transparent
-             dark:bg-[#7C4700] dark:text-[#FFE7B3] dark:border-[#B45309] 
-             dark:hover:bg-[#F59E0B] dark:hover:text-white`
+        ${
+          isCompleted
+            ? `bg-green-200 text-green-800 
+               dark:bg-green-800 dark:text-green-200`
+            : `bg-yellow-200 text-yellow-800 
+               dark:bg-yellow-700 dark:text-yellow-200`
         }
       `}
     >
@@ -148,8 +134,6 @@ const StatusToggle = ({ lead, index }) => {
     </span>
   );
 };
-
-
 
 
 
@@ -208,7 +192,8 @@ const openModal = (lead, mode) => {
   {/* Search Button */}
   <button
     onClick={handleFilterSearch}
-    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
+    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition  dark:bg-gradient-to-r dark:from-[#252745] dark:to-[#252745] 
+     "
   >
     Search
   </button>
@@ -308,11 +293,10 @@ const openModal = (lead, mode) => {
                   </TableCell>
                   
                   <TableCell className="px-5 py-3 border-r border-gray-300 dark:border-gray-700 text-center">
-                    <StatusToggle lead={lead} index={index} />
-                   
-                  </TableCell>
+  <StatusBadge status={lead.status} />
+</TableCell>
 
-               <TableCell className="px-5 py-3 text-center">
+  <TableCell className="px-5 py-3 text-center">
   <div className="flex items-center justify-center gap-2">
 
     {/* VIEW BUTTON */}
@@ -320,12 +304,12 @@ const openModal = (lead, mode) => {
       <button
         onClick={() => openModal(lead, "view")}
         className="
-          flex items-center justify-center w-8 h-8 rounded-lg
-          border border-[#27AE60]/30 bg-[#27AE60]/10 text-[#27AE60]
-          hover:bg-[#27AE60] hover:text-white transition-all
+          flex items-center justify-center w-8 h-8 rounded-md
+          bg-emerald-500 text-white border border-emerald-500/50
+          hover:bg-emerald-600 hover:border-emerald-600 transition-all
 
-          dark:border-[#27AE60]/40 dark:bg-[#1b2e1d] dark:text-[#6BFFA0]
-          dark:hover:bg-[#27AE60] dark:hover:text-white
+          dark:bg-emerald-700 dark:border-emerald-600/40 dark:text-white
+          dark:hover:bg-emerald-600 dark:hover:border-emerald-500
         "
       >
         <Eye size={16} />
@@ -339,20 +323,20 @@ const openModal = (lead, mode) => {
     {/* EDIT BUTTON */}
     <div className="relative group">
       <button
-        onClick={() => openModal(lead, "edit")}
+     onClick={() => handleEditClick(lead)}
         className="
-          flex items-center justify-center w-8 h-8 rounded-lg
-          border border-[#E67E22]/30 bg-[#E67E22]/10 text-[#E67E22]
-          hover:bg-[#E67E22] hover:text-white transition-all
+          flex items-center justify-center w-8 h-8 rounded-md
+          bg-blue-500 text-white border border-blue-500/50
+          hover:bg-blue-600 hover:border-blue-600 transition-all
 
-          dark:border-[#E67E22]/40 dark:bg-[#2d241b] dark:text-[#FFC68A]
-          dark:hover:bg-[#E67E22] dark:hover:text-white
+          dark:bg-blue-700 dark:border-blue-600/40 dark:text-white
+          dark:hover:bg-blue-600 dark:hover:border-blue-500
         "
       >
         <Pencil size={16} />
       </button>
 
-      <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded bg-gray-900 text-white dark:bg-white dark:text-gray-900 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-md">
+      <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded bg-gray-900 text-white dark:bg-white dark:text-gray-900 opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap shadow-md">
         Edit
       </span>
     </div>
@@ -477,6 +461,12 @@ const openModal = (lead, mode) => {
   data={selectedLead}
   mode={modalMode}
 />
+<EditLeadModal 
+        isOpen={isEditOpen} 
+        onClose={() => setIsEditOpen(false)} 
+        leadData={selectedLead}
+        onUpdate={fetchLeads}
+      />
     </div>
   );
 }
