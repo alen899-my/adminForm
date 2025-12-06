@@ -6,8 +6,8 @@ import {
 } from "lucide-react";
 
 export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
-  // Prevent rendering if not open
-  if (!isOpen) return null;
+  // 1. MOVED ALL HOOKS TO THE TOP
+  const modalRef = useRef(null);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -30,9 +30,35 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
 
   const [existingFiles, setExistingFiles] = useState({});
 
+  // --- CLICK OUTSIDE & ESCAPE KEY LOGIC ---
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+
+    const handleEscKey = (e) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("keydown", handleEscKey);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleEscKey);
+    };
+  }, [isOpen, onClose]);
+
   // POPULATE DATA
   useEffect(() => {
-    if (leadData) {
+    // Only populate if open and data exists
+    if (isOpen && leadData) {
       setFormData((prev) => ({
         ...prev,
         status: leadData.status || "in-progress",
@@ -75,8 +101,10 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
         setExistingFiles(fileMap);
       }
     }
-    setCurrentStep(1); 
-  }, [leadData]);
+    if (isOpen) {
+        setCurrentStep(1); 
+    }
+  }, [leadData, isOpen]);
 
   // --- VALIDATION ---
   const validateStep1 = () => {
@@ -188,12 +216,18 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
     );
   };
 
+  // 2. CHECK ISOPEN AFTER ALL HOOKS ARE DEFINED
+  if (!isOpen) return null;
+
   // --- RENDER ---
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4 z-[9999]">
       
       {/* --- MODAL CONTAINER --- */}
-      <div className="w-full max-w-5xl bg-white dark:bg-gray-900 border border-gray-400 dark:border-gray-600 rounded-xl max-h-[90vh] overflow-y-auto shadow-xl relative flex flex-col">
+      <div 
+        ref={modalRef} 
+        className="w-full max-w-5xl bg-white dark:bg-gray-900 border border-gray-400 dark:border-gray-600 rounded-xl max-h-[90vh] overflow-y-auto shadow-xl relative flex flex-col"
+      >
         
         {/* --- STICKY HEADER --- */}
         <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 px-5 py-3 flex justify-between items-center shrink-0">
@@ -355,21 +389,21 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                     </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Lobbies</label>
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Number of lobbies / entrances</label>
                       <input type="number" name="lobbies" value={formData.lobbies} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Key Rooms</label>
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Number of key control rooms</label>
                       <input type="number" name="keyRooms" value={formData.keyRooms} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Distance</label>
+                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Distance between lobby & key room</label>
                       <input type="text" name="distance" value={formData.distance} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     {/* Radios */}
-                    {['supervisorUser', 'validationUser', 'reportUser'].map(field => (
+                    {['Supervisor user required?', 'Ticket validation user?', 'Finance report access?'].map(field => (
                       <div key={field} className="border border-gray-300 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-200 mb-1 capitalize">{field.replace('User', '')} Access?</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-200 mb-1 capitalize">{field.replace('User', '')} </p>
                         <div className="flex items-center gap-4">
                           <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
                             <input type="radio" name={field} value="yes" checked={formData[field] === "yes"} onChange={handleChange} className="text-blue-600 focus:ring-blue-500" /> Yes
@@ -385,36 +419,150 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
               )}
 
               {/* STEP 3: PRICING */}
-              {currentStep === 3 && (
-                <div className="space-y-3">
-                   <div>
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">Valet Ticket & Pricing</h2>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Tell us how tickets are generated and how you charge guests.</p>
-                    </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700">
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">Ticket Type</label>
-                      <div className="flex flex-col gap-2">
-                        <label className="flex gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="radio" name="ticketType" value="pre-printed" checked={formData.ticketType === "pre-printed"} onChange={handleChange} className="text-blue-600" /> Pre-printed</label>
-                        <label className="flex gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="radio" name="ticketType" value="system-generated" checked={formData.ticketType === "system-generated"} onChange={handleChange} className="text-blue-600" /> System Generated</label>
-                      </div>
-                    </div>
-                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700">
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">Fee Type</label>
-                      <div className="flex gap-4 flex-wrap">
-                        <label className="flex gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="radio" name="feeType" value="fixed" checked={formData.feeType === "fixed"} onChange={handleChange} className="text-blue-600" /> Fixed</label>
-                        <label className="flex gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="radio" name="feeType" value="hourly" checked={formData.feeType === "hourly"} onChange={handleChange} className="text-blue-600" /> Hourly</label>
-                      </div>
-                    </div>
-                    <div className="md:col-span-2">
-                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
-                        Ticket Prices (AED) <Banknote className="w-4 h-4 text-gray-400" />
-                        </label>
-                      <textarea rows={2} name="ticketPricing" value={formData.ticketPricing} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                    </div>
-                  </div>
-                </div>
-              )}
+            {/* STEP 3: PRICING */}
+{currentStep === 3 && (
+  <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+    
+    {/* Section Heading */}
+    <div>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        Valet Ticket & Pricing
+      </h2>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Tell us how tickets are generated and how you charge guests.
+      </p>
+    </div>
+
+    {/* Form Fields Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      {/* Ticket Type */}
+      <div className="md:col-span-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700">
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">
+          Ticket Type
+        </label>
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+            <input 
+              type="radio" 
+              name="ticketType" 
+              value="pre-printed" 
+              checked={formData.ticketType === "pre-printed"} 
+              onChange={handleChange} 
+              className="text-blue-600 focus:ring-blue-500" 
+            />
+            Pre-printed ticket
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+            <input 
+              type="radio" 
+              name="ticketType" 
+              value="system-generated" 
+              checked={formData.ticketType === "system-generated"} 
+              onChange={handleChange} 
+              className="text-blue-600 focus:ring-blue-500" 
+            />
+            Ticket generated by system
+          </label>
+        </div>
+      </div>
+
+      {/* Valet Fee Type */}
+      <div className="md:col-span-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700">
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">
+          Valet Fee Type
+        </label>
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+            <input 
+              type="radio" 
+              name="feeType" 
+              value="fixed" 
+              checked={formData.feeType === "fixed"} 
+              onChange={handleChange} 
+              className="text-blue-600 focus:ring-blue-500" 
+            />
+            Fixed fee
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+            <input 
+              type="radio" 
+              name="feeType" 
+              value="hourly" 
+              checked={formData.feeType === "hourly"} 
+              onChange={handleChange} 
+              className="text-blue-600 focus:ring-blue-500" 
+            />
+            Hourly
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+            <input 
+              type="radio" 
+              name="feeType" 
+              value="free" 
+              checked={formData.feeType === "free"} 
+              onChange={handleChange} 
+              className="text-blue-600 focus:ring-blue-500" 
+            />
+            Free (complimentary)
+          </label>
+        </div>
+      </div>
+
+      {/* Ticket Pricing */}
+      <div className="md:col-span-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+          Ticket Prices (AED) <Banknote className="w-4 h-4 text-gray-400" />
+        </label>
+        <textarea 
+          rows={2} 
+          name="ticketPricing" 
+          value={formData.ticketPricing} 
+          onChange={handleChange} 
+          placeholder="e.g. Standard: 50 AED, VIP: 100 AED..."
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+        />
+        <p className="text-xs text-gray-400 mt-1">Mention separate pricing if applicable.</p>
+      </div>
+
+      {/* VAT Handling */}
+      <div className="md:col-span-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700">
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">
+          VAT Handling
+        </label>
+        <div className="flex flex-wrap gap-6">
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+            <input 
+              type="radio" 
+              name="vatType" 
+              value="inclusive" 
+              checked={formData.vatType === "inclusive"} 
+              onChange={handleChange} 
+              className="text-blue-600 focus:ring-blue-500" 
+            />
+            Inclusive
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+            <input 
+              type="radio" 
+              name="vatType" 
+              value="exclusive" 
+              checked={formData.vatType === "exclusive"} 
+              onChange={handleChange} 
+              className="text-blue-600 focus:ring-blue-500" 
+            />
+            Exclusive
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+)}
 
               {/* STEP 4: DRIVERS */}
               {currentStep === 4 && (
@@ -437,28 +585,104 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
               )}
 
               {/* STEP 5: ADMIN */}
-              {currentStep === 5 && (
-                <div className="space-y-3">
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2"><ShieldUser className="w-5 h-5 text-blue-600 dark:text-blue-500" /> Super Admin Contact</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Main person responsible for valet operations & application access.</p>
-                    </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Admin Name <span className="text-red-600 font-bold">*</span></label>
-                      <input type="text" name="adminName" value={formData.adminName} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminName ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Email <span className="text-red-600 font-bold">*</span></label>
-                      <input type="email" name="adminEmail" value={formData.adminEmail} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminEmail ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Phone <span className="text-red-600 font-bold">*</span></label>
-                      <input type="tel" name="adminPhone" value={formData.adminPhone} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminPhone ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} />
-                    </div>
-                  </div>
-                </div>
-              )}
+             {/* STEP 5: ADMIN */}
+{currentStep === 5 && (
+  <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+    
+    {/* Section Heading */}
+    <div>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <ShieldUser className="w-5 h-5 text-blue-600 dark:text-blue-500" />
+        Super Admin Contact
+      </h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Main person responsible for valet operations & application access.
+      </p>
+    </div>
+
+    {/* Form Fields */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      {/* Name */}
+      <div className="md:col-span-2">
+        <label className="text-sm font-medium text-gray-900 dark:text-gray-200">
+          Admin Name <span className="text-red-600 font-bold">*</span>
+        </label>
+        <input 
+          type="text" 
+          name="adminName" 
+          value={formData.adminName} 
+          onChange={handleChange} 
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminName ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} 
+        />
+      </div>
+
+      {/* Email */}
+      <div>
+        <label className="text-sm font-medium text-gray-900 dark:text-gray-200">
+          Email <span className="text-red-600 font-bold">*</span>
+        </label>
+        <input 
+          type="email" 
+          name="adminEmail" 
+          value={formData.adminEmail} 
+          onChange={handleChange} 
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminEmail ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} 
+        />
+      </div>
+
+      {/* Phone */}
+      <div>
+        <label className="text-sm font-medium text-gray-900 dark:text-gray-200">
+          Phone <span className="text-red-600 font-bold">*</span>
+        </label>
+        <input 
+          type="tel" 
+          name="adminPhone" 
+          value={formData.adminPhone} 
+          onChange={handleChange} 
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${errors.adminPhone ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`} 
+        />
+      </div>
+    </div>
+
+    {/* Training Radio Section */}
+    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <label className="block font-medium text-gray-900 dark:text-gray-200 mb-3">
+        Super admin will receive full application training
+      </label>
+
+      <div className="flex flex-col sm:flex-row gap-6">
+        {/* Yes Option */}
+        <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+          <input
+            type="radio"
+            name="trainingRequired"
+            value="yes"
+            checked={formData.trainingRequired === "yes"}
+            onChange={handleChange}
+            className="text-blue-600 focus:ring-blue-500"
+          />
+          Yes, they will be trained
+        </label>
+
+        {/* No Option */}
+        <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+          <input
+            type="radio"
+            name="trainingRequired"
+            value="no"
+            checked={formData.trainingRequired === "no"}
+            onChange={handleChange}
+            className="text-blue-600 focus:ring-blue-500"
+          />
+          No / different plan
+        </label>
+      </div>
+    </div>
+
+  </div>
+)}
 
               {/* STEP 6: DOCUMENTS */}
               {currentStep === 6 && (
