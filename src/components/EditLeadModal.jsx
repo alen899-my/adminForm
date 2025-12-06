@@ -16,7 +16,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
 
   // Initial State
   const [formData, setFormData] = useState({
-    status: "in-progress",
+    status: "pending",
     locationName: "", capacity: "", waitTime: "", mapsUrl: "",
     latitude: "", longitude: "", timing: "", address: "",
     lobbies: "", keyRooms: "", distance: "",
@@ -61,7 +61,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
     if (isOpen && leadData) {
       setFormData((prev) => ({
         ...prev,
-        status: leadData.status || "in-progress",
+        status: leadData.status || "pending",
         locationName: leadData.locationName || "",
         capacity: leadData.capacity || "",
         waitTime: leadData.waitTime || "",
@@ -376,7 +376,7 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                         onChange={handleChange}
                         className="w-full sm:w-48 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none"
                     >
-                        <option value="in-progress">In Progress</option>
+                        <option value="pending">pending</option>
                         <option value="completed">Completed</option>
                     </select>
                   </div>
@@ -443,16 +443,34 @@ export default function EditLeadModal({ isOpen, onClose, leadData, onUpdate }) {
                       <label className="text-sm font-medium text-gray-900 dark:text-gray-200">Distance between lobby & key room</label>
                       <input type="text" name="distance" value={formData.distance} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
-                    {/* Radios */}
-                    {['Supervisor user required?', 'Ticket validation user?', 'Finance report access?'].map(field => (
-                      <div key={field} className="border border-gray-300 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-200 mb-1 capitalize">{field.replace('User', '')} </p>
+                    {/* FIXED: Mapped correctly to state keys */}
+                    {[
+                      { label: 'Supervisor user required?', key: 'supervisorUser' },
+                      { label: 'Ticket validation user?', key: 'validationUser' },
+                      { label: 'Finance report access?', key: 'reportUser' }
+                    ].map((item) => (
+                      <div key={item.key} className="border border-gray-300 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-200 mb-1">{item.label}</p>
                         <div className="flex items-center gap-4">
                           <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
-                            <input type="radio" name={field} value="yes" checked={formData[field] === "yes"} onChange={handleChange} className="text-blue-600 focus:ring-blue-500" /> Yes
+                            <input 
+                              type="radio" 
+                              name={item.key} 
+                              value="yes" 
+                              checked={formData[item.key] === "yes"} 
+                              onChange={handleChange} 
+                              className="text-blue-600 focus:ring-blue-500" 
+                            /> Yes
                           </label>
                           <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
-                            <input type="radio" name={field} value="no" checked={formData[field] === "no"} onChange={handleChange} className="text-blue-600 focus:ring-blue-500" /> No
+                            <input 
+                              type="radio" 
+                              name={item.key} 
+                              value="no" 
+                              checked={formData[item.key] === "no"} 
+                              onChange={handleChange} 
+                              className="text-blue-600 focus:ring-blue-500" 
+                            /> No
                           </label>
                         </div>
                       </div>

@@ -12,7 +12,7 @@ import { Eye, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import LeadDetailsModal from "../LeadDetailsModal";
 import EditLeadModal from "../EditLeadModal";
 
-export default function LeadsTable() {
+export default function LeadsTable({ refreshTrigger = 0 }) {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -145,7 +145,7 @@ export default function LeadsTable() {
 
   useEffect(() => {
     fetchLeads();
-  }, [page]);
+  }, [page, refreshTrigger]);
 
   const handleJumpPage = (e) => {
     if (e.key === "Enter") {

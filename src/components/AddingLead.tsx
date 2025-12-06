@@ -6,7 +6,7 @@ import {
   Clock, 
   Navigation, 
   Building2, 
-  ArrowRight, Upload, Users, FileBarChart, DoorOpen, Key, Ruler, ShieldCheck, Ticket, Coins, Banknote, Receipt, Percent, UserCog, FileText, ShieldUser, User, Mail, Phone, GraduationCap, CheckCircle
+  ArrowRight, Upload, Users, FileBarChart, DoorOpen, Key, Ruler, ShieldCheck, Ticket, Coins, Banknote, Receipt, Percent, UserCog, FileText, ShieldUser, User, Mail, Phone, GraduationCap, CheckCircle, Lock // Added Lock icon
 } from "lucide-react";
 import { useRef } from "react";
 // Added useParams to get the ID from the URL
@@ -14,6 +14,7 @@ import { useParams, useRouter } from "next/navigation";
 
 export default function Page() {
   // Get ID from URL parameters
+  const router = useRouter();
   const params = useParams();
   const leadId = params?.id; 
   const isEditMode = !!leadId;
@@ -21,6 +22,10 @@ export default function Page() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [wizardError, setWizardError] = useState("");
+  
+  // --- NEW STATE FOR READ-ONLY MODE ---
+  const [isReadOnly, setIsReadOnly] = useState(false); 
+
   const [errors, setErrors] = useState({
     locationName: "",
     capacity: "",
@@ -93,6 +98,11 @@ export default function Page() {
 
           if (data.success && data.lead) {
             const l = data.lead;
+
+            // --- NEW CHECK: IF COMPLETED, SET READ ONLY ---
+            if (l.status === 'completed') {
+              setIsReadOnly(true);
+            }
 
             // Map DB attachments to UI state keys
             const fileMap = {};
@@ -175,6 +185,9 @@ export default function Page() {
 
   // Handle form input changes
   const handleChange = (e) => {
+    // Prevent changes if read-only
+    if (isReadOnly) return; 
+
     const { name, value, type, files } = e.target;
 
     if (type === "file") {
@@ -185,6 +198,12 @@ export default function Page() {
   };
 
   const handleFinalSubmit = async () => {
+    // --- NEW CHECK: STOP SUBMIT IF READ ONLY ---
+    if (isReadOnly) {
+        alert("This lead is marked as COMPLETED and cannot be edited.");
+        return;
+    }
+
     const formDataToSend = new FormData();
 
     // Append all text fields
@@ -371,7 +390,7 @@ export default function Page() {
     const fileRef = useRef(null);
 
     return (
-      <div className="border rounded-lg p-2 bg-gray-50 flex flex-col gap-2">
+      <div className={`border rounded-lg p-2 bg-gray-50 flex flex-col gap-2 ${isReadOnly ? 'opacity-70 pointer-events-none' : ''}`}>
         <label className="text-sm font-medium text-gray-900">{label}</label>
 
         {/* Hidden input */}
@@ -380,6 +399,7 @@ export default function Page() {
           type="file"
           accept={accept}
           name={name}
+          disabled={isReadOnly} // Disable input
           onChange={(e) =>
             setFormData((prev) => ({
               ...prev,
@@ -393,6 +413,7 @@ export default function Page() {
         <button
           type="button"
           onClick={() => fileRef.current.click()}
+          disabled={isReadOnly} // Disable button
           className="flex items-center justify-between border border-gray-300 bg-white rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
         >
           <span className="truncate">
@@ -430,10 +451,18 @@ export default function Page() {
           </div>
 
           {/* Eyebrow Label */}
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center gap-2 flex-col">
             <p className="uppercase text-xs sm:text-sm tracking-wider font-semibold text-[#ae5c83] bg-[#ae5c83]/10 px-3 py-1 rounded-md">
               {isEditMode ? "Edit Valet Parking Lead" : "New Valet Parking Lead – Free Signup"}
             </p>
+
+             {/* --- NEW: COMPLETED WARNING BANNER --- */}
+            {isReadOnly && (
+              <div className="mt-2 w-full bg-red-100 border border-red-200 text-red-800 px-4 py-2 rounded-md flex items-center justify-center gap-2 animate-in fade-in">
+                <Lock className="w-4 h-4" />
+                <span className="text-sm font-bold">Process Already Completed </span>
+              </div>
+            )}
           </div>
 
           {/* Main Heading */}
@@ -529,7 +558,7 @@ export default function Page() {
 
         {/* STEP 1: LOCATION INFORMATION */}
         {currentStep === 1 && (
-          <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className={`space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 ${isReadOnly ? 'pointer-events-none opacity-80' : ''}`}>
 
             {/* Section Heading */}
             <div>
@@ -554,6 +583,7 @@ export default function Page() {
                 <input
                   type="text"
                   name="locationName"
+                  disabled={isReadOnly}
                   placeholder="e.g. Grand Hyatt Dubai - Main Entrance"
                   value={formData.locationName}
                   onChange={(e) => {
@@ -575,6 +605,7 @@ export default function Page() {
                 <input
                   type="number"
                   name="capacity"
+                  disabled={isReadOnly}
                   placeholder="Total number of parking slots"
                   value={formData.capacity}
                   onChange={(e) => {
@@ -596,6 +627,7 @@ export default function Page() {
                 <input
                   type="text"
                   name="waitTime"
+                  disabled={isReadOnly}
                   placeholder="e.g., 10 – 15 mins"
                   value={formData.waitTime}
                   onChange={(e) => setFormData({ ...formData, waitTime: e.target.value })}
@@ -609,6 +641,7 @@ export default function Page() {
                 <input
                   type="url"
                   name="mapsUrl"
+                  disabled={isReadOnly}
                   placeholder="Paste Google Maps share link"
                   value={formData.mapsUrl}
                   onChange={(e) => setFormData({ ...formData, mapsUrl: e.target.value })}
@@ -622,6 +655,7 @@ export default function Page() {
                 <input
                   type="text"
                   name="latitude"
+                  disabled={isReadOnly}
                   placeholder="e.g., 25.2852° N"
                   value={formData.latitude}
                   onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
@@ -635,6 +669,7 @@ export default function Page() {
                 <input
                   type="text"
                   name="longitude"
+                  disabled={isReadOnly}
                   placeholder="e.g., 55.3598° E"
                   value={formData.longitude}
                   onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
@@ -648,6 +683,7 @@ export default function Page() {
                 <input
                   type="text"
                   name="timing"
+                  disabled={isReadOnly}
                   placeholder="e.g., 24 Hours / 10 AM – 2 AM"
                   value={formData.timing}
                   onChange={(e) => setFormData({ ...formData, timing: e.target.value })}
@@ -662,6 +698,7 @@ export default function Page() {
                 <textarea
                   rows={3}
                   name="address"
+                  disabled={isReadOnly}
                   placeholder="TRN and full registered address of the property"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -674,7 +711,7 @@ export default function Page() {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={handleNext}
-                className="btn-primary flex items-center gap-2"
+                className="btn-primary flex items-center gap-2 pointer-events-auto" // Ensure button works even if parent is disabled
               >
                 Next Step
                 <ArrowRight className="w-4 h-4" />
@@ -687,7 +724,7 @@ export default function Page() {
 
 
         {currentStep === 2 && (
-          <div className="space-y-3 animate-in fade-in slide-in-from-right-8 duration-500">
+          <div className={`space-y-3 animate-in fade-in slide-in-from-right-8 duration-500 ${isReadOnly ? 'pointer-events-none opacity-80' : ''}`}>
 
             {/* Header */}
             <div className="space-y-0">
@@ -708,6 +745,7 @@ export default function Page() {
                 <input
                   type="number"
                   name="lobbies"
+                  disabled={isReadOnly}
                   placeholder="e.g., 2"
                   value={formData.lobbies}
                   onChange={handleChange}
@@ -720,6 +758,7 @@ export default function Page() {
                 <input
                   type="number"
                   name="keyRooms"
+                  disabled={isReadOnly}
                   placeholder="e.g., 1"
                   value={formData.keyRooms}
                   onChange={handleChange}
@@ -732,6 +771,7 @@ export default function Page() {
                 <input
                   type="text"
                   name="distance"
+                  disabled={isReadOnly}
                   placeholder="e.g., 50 meters"
                   value={formData.distance}
                   onChange={handleChange}
@@ -750,6 +790,7 @@ export default function Page() {
                       type="radio"
                       name="supervisorUser"
                       value="yes"
+                      disabled={isReadOnly}
                       checked={formData.supervisorUser === "yes"}
                       onChange={handleChange}
                       className="w-4 h-4 "
@@ -761,6 +802,7 @@ export default function Page() {
                       type="radio"
                       name="supervisorUser"
                       value="no"
+                      disabled={isReadOnly}
                       checked={formData.supervisorUser === "no"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -778,6 +820,7 @@ export default function Page() {
                       type="radio"
                       name="validationUser"
                       value="yes"
+                      disabled={isReadOnly}
                       checked={formData.validationUser === "yes"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -789,6 +832,7 @@ export default function Page() {
                       type="radio"
                       name="validationUser"
                       value="no"
+                      disabled={isReadOnly}
                       checked={formData.validationUser === "no"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -806,6 +850,7 @@ export default function Page() {
                       type="radio"
                       name="reportUser"
                       value="yes"
+                      disabled={isReadOnly}
                       checked={formData.reportUser === "yes"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -817,6 +862,7 @@ export default function Page() {
                       type="radio"
                       name="reportUser"
                       value="no"
+                      disabled={isReadOnly}
                       checked={formData.reportUser === "no"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -830,10 +876,10 @@ export default function Page() {
 
             {/* Buttons */}
             <div className="pt-2 flex justify-between items-center">
-              <button onClick={() => setCurrentStep(prev => prev - 1)} className="text-gray-500 text-sm">
+              <button onClick={() => setCurrentStep(prev => prev - 1)} className="text-gray-500 text-sm pointer-events-auto">
                 ← Back
               </button>
-              <button onClick={handleNext} className="btn-primary flex gap-2">
+              <button onClick={handleNext} className="btn-primary flex gap-2 pointer-events-auto">
                 Next Step
               </button>
             </div>
@@ -844,7 +890,7 @@ export default function Page() {
 
         {/* STEP 3: VALET TICKET & PRICING */}
         {currentStep === 3 && (
-          <div className="space-y-3 animate-in fade-in slide-in-from-right-8 duration-500">
+          <div className={`space-y-3 animate-in fade-in slide-in-from-right-8 duration-500 ${isReadOnly ? 'pointer-events-none opacity-80' : ''}`}>
 
             {/* Section Heading */}
             <div className="space-y-0">
@@ -868,6 +914,7 @@ export default function Page() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="ticketType" value="pre-printed"
+                      disabled={isReadOnly}
                       checked={formData.ticketType === "pre-printed"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -877,6 +924,7 @@ export default function Page() {
 
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="ticketType" value="system-generated"
+                      disabled={isReadOnly}
                       checked={formData.ticketType === "system-generated"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -896,6 +944,7 @@ export default function Page() {
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="feeType" value="fixed"
+                      disabled={isReadOnly}
                       checked={formData.feeType === "fixed"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -905,6 +954,7 @@ export default function Page() {
 
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="feeType" value="hourly"
+                      disabled={isReadOnly}
                       checked={formData.feeType === "hourly"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -914,6 +964,7 @@ export default function Page() {
 
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="feeType" value="free"
+                      disabled={isReadOnly}
                       checked={formData.feeType === "free"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -933,6 +984,7 @@ export default function Page() {
                 <textarea
                   rows={2}
                   name="ticketPricing"
+                  disabled={isReadOnly}
                   placeholder="e.g. Standard: 50 AED, VIP: 100 AED..."
                   value={formData.ticketPricing}
                   onChange={handleChange}
@@ -952,6 +1004,7 @@ export default function Page() {
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="vatType" value="inclusive"
+                      disabled={isReadOnly}
                       checked={formData.vatType === "inclusive"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -961,6 +1014,7 @@ export default function Page() {
 
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="vatType" value="exclusive"
+                      disabled={isReadOnly}
                       checked={formData.vatType === "exclusive"}
                       onChange={handleChange}
                       className="w-4 h-4"
@@ -973,11 +1027,11 @@ export default function Page() {
 
             {/* Buttons */}
             <div className="pt-2 flex justify-between">
-              <button onClick={() => setCurrentStep(prev => prev - 1)} className="text-gray-500 text-sm">
+              <button onClick={() => setCurrentStep(prev => prev - 1)} className="text-gray-500 text-sm pointer-events-auto">
                 ← Back
               </button>
 
-              <button onClick={handleNext} className="btn-primary">
+              <button onClick={handleNext} className="btn-primary pointer-events-auto">
                 Next Step
               </button>
             </div>
@@ -988,7 +1042,7 @@ export default function Page() {
 
         {/* STEP 4: DRIVERS / CVA TEAM */}
         {currentStep === 4 && (
-          <div className="space-y-3 animate-in fade-in slide-in-from-right-8 duration-500">
+          <div className={`space-y-3 animate-in fade-in slide-in-from-right-8 duration-500 ${isReadOnly ? 'pointer-events-none opacity-80' : ''}`}>
 
             {/* Section Heading */}
             <div className="space-y-1">
@@ -1014,6 +1068,7 @@ export default function Page() {
                 <input
                   type="number"
                   name="driverCount"
+                  disabled={isReadOnly}
                   placeholder="e.g. 15"
                   value={formData.driverCount}
                   onChange={handleChange}
@@ -1031,6 +1086,7 @@ export default function Page() {
                 <textarea
                   rows={6}
                   name="driverList"
+                  disabled={isReadOnly}
                   placeholder={`e.g.\n1001 - John Doe\n1002 - Jane Smith\n1003 - Ahmed Ali`}
                   value={formData.driverList}
                   onChange={handleChange}
@@ -1052,14 +1108,14 @@ export default function Page() {
             <div className="pt-2 flex justify-between">
               <button
                 onClick={() => setCurrentStep(prev => prev - 1)}
-                className="text-gray-500 hover:text-gray-700 font-medium px-4 py-2 transition-colors"
+                className="text-gray-500 hover:text-gray-700 font-medium px-4 py-2 transition-colors pointer-events-auto"
               >
                 Back
               </button>
 
               <button
                 onClick={handleNext}
-                className="flex items-center gap-2 bg-[#ae5c83] hover:bg-[#964a6d] text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+                className="flex items-center gap-2 bg-[#ae5c83] hover:bg-[#964a6d] text-white px-6 py-2.5 rounded-lg font-medium transition-colors pointer-events-auto"
               >
                 Next Step
                 <ArrowRight className="w-4 h-4" />
@@ -1072,7 +1128,7 @@ export default function Page() {
 
         {/* STEP 5: SUPER ADMIN CONTACT */}
         {currentStep === 5 && (
-          <div className="space-y-3 animate-in fade-in slide-in-from-right-8 duration-500">
+          <div className={`space-y-3 animate-in fade-in slide-in-from-right-8 duration-500 ${isReadOnly ? 'pointer-events-none opacity-80' : ''}`}>
 
             {/* Section Heading */}
             <div className="space-y-1">
@@ -1093,6 +1149,7 @@ export default function Page() {
               <input
                 type="text"
                 name="adminName"
+                disabled={isReadOnly}
                 placeholder="e.g., Ayush Aggarwal"
                 value={formData.adminName}
                 onChange={(e) => {
@@ -1112,6 +1169,7 @@ export default function Page() {
               <input
                 type="email"
                 name="adminEmail"
+                disabled={isReadOnly}
                 placeholder="e.g., ayush@example.com"
                 value={formData.adminEmail}
                 onChange={(e) => {
@@ -1131,6 +1189,7 @@ export default function Page() {
               <input
                 type="tel"
                 name="adminPhone"
+                disabled={isReadOnly}
                 placeholder="e.g., 971521234567"
                 value={formData.adminPhone}
                 onChange={(e) => {
@@ -1157,6 +1216,7 @@ export default function Page() {
                     type="radio"
                     name="trainingRequired"
                     value="yes"
+                    disabled={isReadOnly}
                     checked={formData.trainingRequired === "yes"}
                     onChange={handleChange}
                     className="text-[#ae5c83] focus:ring-[#ae5c83]"
@@ -1170,6 +1230,7 @@ export default function Page() {
                     type="radio"
                     name="trainingRequired"
                     value="no"
+                    disabled={isReadOnly}
                     checked={formData.trainingRequired === "no"}
                     onChange={handleChange}
                     className="text-[#ae5c83] focus:ring-[#ae5c83]"
@@ -1184,14 +1245,14 @@ export default function Page() {
             <div className="pt-2 flex justify-between">
               <button
                 onClick={() => setCurrentStep(prev => prev - 1)}
-                className="text-gray-500 hover:text-gray-700 font-medium px-4 py-2"
+                className="text-gray-500 hover:text-gray-700 font-medium px-4 py-2 pointer-events-auto"
               >
                 ← Back
               </button>
 
               <button
                 onClick={handleNext}
-                className="flex items-center gap-2 bg-[#ae5c83] hover:bg-[#964a6d] text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+                className="flex items-center gap-2 bg-[#ae5c83] hover:bg-[#964a6d] text-white px-6 py-2.5 rounded-lg font-medium transition-colors pointer-events-auto"
               >
                 Next Step
                 <ArrowRight className="w-4 h-4" />
@@ -1216,7 +1277,7 @@ export default function Page() {
             </div>
 
             {/* File Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 ${isReadOnly ? 'pointer-events-none opacity-80' : ''}`}>
 
               {/* COMPANY LOGO */}
               <FileUploadBlock
@@ -1261,7 +1322,7 @@ export default function Page() {
             </div>
 
             {/* Notes Textarea */}
-            <div>
+            <div className={isReadOnly ? 'pointer-events-none opacity-80' : ''}>
               <label className="text-sm font-medium text-gray-900">
                 How will you send documents?
               </label>
@@ -1269,6 +1330,7 @@ export default function Page() {
               <textarea
                 rows={3}
                 name="documentSubmitMethod"
+                disabled={isReadOnly}
                 placeholder="Example: We will email files within 24 hours."
                 value={formData.documentSubmitMethod}
                 onChange={handleChange}
@@ -1287,9 +1349,14 @@ export default function Page() {
 
               <button
                 onClick={handleFinalSubmit}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm shadow-sm"
+                disabled={isReadOnly} // Disable submit button
+                className={`px-6 py-2 rounded-lg text-sm shadow-sm transition-all
+                  ${isReadOnly 
+                    ? "bg-gray-400 cursor-not-allowed text-gray-100" 
+                    : "bg-green-600 hover:bg-green-700 text-white"
+                  }`}
               >
-                {isEditMode ? "Update Lead" : "Finish & Submit"}
+                {isReadOnly ? "Locked (Completed)" : (isEditMode ? "Update Lead" : "Finish & Submit")}
               </button>
             </div>
           </div>

@@ -15,10 +15,12 @@ import {
   Plus, 
   X
 } from "lucide-react";
-
+import {  useRouter } from "next/navigation";
 // --- FORM COMPONENT (Internal Modal with Dark Mode) ---
-const LeadFormModal = ({ onClose }: { onClose: () => void }) => {
+const LeadFormModal = ({ onClose, onLeadAdded }: { onClose: () => void, onLeadAdded: () => void }) => {
+  // ... existing hooks ...
   const modalRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [wizardError, setWizardError] = useState("");
@@ -162,7 +164,9 @@ const LeadFormModal = ({ onClose }: { onClose: () => void }) => {
         adminName: "", adminEmail: "", adminPhone: "", trainingRequired: "",
         logoCompany: null, logoClient: null, vatCertificate: null, tradeLicense: null, documentSubmitMethod: ""
       });
+      router.refresh();
       setCurrentStep(1);
+      onLeadAdded();
     } else {
       alert("⚠️ Submission failed: " + data.message);
     }
@@ -531,9 +535,10 @@ const LeadFormModal = ({ onClose }: { onClose: () => void }) => {
 // --- BREADCRUMB COMPONENT ---
 interface BreadcrumbProps {
   pageTitle: string;
+  onLeadAdded?: () => void;
 }
 
-const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
+const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onLeadAdded }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -546,7 +551,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
           onClick={() => setIsModalOpen(true)}
           className="
             inline-flex items-center justify-center gap-2 
-            w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors
+             sm:w-auto px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors
             bg-blue-600 hover:bg-blue-700 text-white
             dark:bg-blue-600 dark:hover:bg-blue-500
           "
@@ -556,7 +561,9 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
         </button>
       </div>
 
-      {isModalOpen && <LeadFormModal onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && <LeadFormModal onClose={() => setIsModalOpen(false)} onLeadAdded={() => {
+             if(onLeadAdded) onLeadAdded();
+          }}/>}
     </>
   );
 };
